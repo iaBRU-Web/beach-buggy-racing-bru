@@ -619,7 +619,6 @@ function generateTrack(ti){
     const rfl=new THREE.DirectionalLight(0x88CCFF,.3);rfl.position.set(-40,20,-40);scene.add(rfl);
   }
   if(T.theme==='volcano'){
-    scene.add(Object.assign(new THREE.PointLight(0xFF4400,2.5,100),{position:{x:0,y:8,z:0}}));
     const lp=new THREE.PointLight(0xFF4400,2.5,100);lp.position.set(0,8,0);scene.add(lp);
   }
   if(T.theme==='arena'){
@@ -1889,19 +1888,15 @@ let menuCars=[],menuAngle=0;
   const dl2=new THREE.DirectionalLight(0x4477FF,.6);dl2.position.set(-25,20,-15);menuScene.add(dl2);
   // Track ring
   const tg=new THREE.TorusGeometry(19,4,6,42);
-  menuScene.add(new THREE.Mesh(tg,new THREE.MeshPhongMaterial({color:0x888888,shininess:20}))
-    .position.set||new THREE.Mesh(tg,new THREE.MeshPhongMaterial({color:0x888888,shininess:20})));
   const tmesh=new THREE.Mesh(tg,new THREE.MeshPhongMaterial({color:0x888888,shininess:20}));
   tmesh.rotation.x=Math.PI/2;tmesh.position.y=-1.5;menuScene.add(tmesh);
   // Ground
-  menuScene.add(Object.assign(new THREE.Mesh(new THREE.PlaneGeometry(200,200),
-    new THREE.MeshPhongMaterial({color:0x0A1A0A})),{rotation:{x:-Math.PI/2,y:0,z:0},position:{x:0,y:-2,z:0}}));
   const gndM=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshPhongMaterial({color:0x0A1A0A}));
   gndM.rotation.x=-Math.PI/2;gndM.position.y=-2;menuScene.add(gndM);
   // Water reflection plane
   const waterM=new THREE.Mesh(new THREE.PlaneGeometry(300,300),
     new THREE.MeshPhongMaterial({color:0x0066AA,transparent:true,opacity:.5,shininess:180}));
-  waterM.rotation.x=-Math.PI/2;waterM.position.set(0,-6,0);menuScene.add(waterM);
+  waterM.rotation.x=-Math.PI/2;waterM.position.y=-6;menuScene.add(waterM);
   // Cars on track
   CARS.slice(0,6).forEach((cd,i)=>{
     const m=buildCarMesh(cd);m.scale.setScalar(1.1);

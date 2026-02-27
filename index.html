@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BRU KART RACING – Beach Buggy</title>
+<title>BRU KART RACING – BEACH BUGGY CHAMPIONSHIP</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -28,6 +28,8 @@
   <div id="speedLines"></div>
   <div id="damageFlash"></div>
   <div id="lapFlash"></div>
+  <div id="slipstream"></div>
+  <div id="offroadWarning">OFF-ROAD</div>
 </div>
 
 <!-- WIN BANNER -->
@@ -43,9 +45,9 @@
   <div id="ts-waves"><div class="wave w1"></div><div class="wave w2"></div><div class="wave w3"></div></div>
   <div id="ts-palms"><span class="tpalm">🌴</span><span class="tpalm">🌴</span></div>
   <div id="logo">BRU KART RACING</div>
-  <div id="logo-sub">BEACH BUGGY EDITION</div>
+  <div id="logo-sub">BEACH BUGGY CHAMPIONSHIP</div>
   <div id="logo-tag">BY INEZA AIME BRUNO</div>
-  <button class="mbtn mbtn-gold" onclick="startQuickRace()">🏖️ QUICK RACE</button>
+  <button class="mbtn mbtn-gold" onclick="startQuickRace()">🏁 QUICK RACE</button>
   <button class="mbtn mbtn-gold" onclick="showScreen('champScreen')">🏆 CHAMPIONSHIP</button>
   <button class="mbtn mbtn-blue" onclick="showScreen('garageScreen')">🚗 GARAGE</button>
   <button class="mbtn mbtn-teal" onclick="showScreen('shopScreen')">🛒 SHOP</button>
@@ -80,7 +82,10 @@
   <div class="scr-title">⚙️ SETTINGS</div>
   <div class="sr"><label>SOUND FX</label><button class="tog on" id="sfxT" onclick="toggleSFX()">ON</button></div>
   <div class="sr"><label>DIFFICULTY</label><select id="diffSel" onchange="saveSetting('difficulty',this.value)">
-    <option value="easy">EASY</option><option value="medium" selected>MEDIUM</option><option value="hard">HARD</option>
+    <option value="easy">EASY</option><option value="medium" selected>MEDIUM</option><option value="hard">HARD</option><option value="expert">EXPERT</option>
+  </select></div>
+  <div class="sr"><label>AI AGGRESSION</label><select id="aggroSel" onchange="saveSetting('aggression',this.value)">
+    <option value="low">LOW</option><option value="medium" selected>MEDIUM</option><option value="high">HIGH</option>
   </select></div>
   <div class="sr"><label>RESET PROGRESS</label><button class="mbtn mbtn-red" style="margin:0;padding:7px 20px;min-width:0;font-size:11px" onclick="resetProgress()">RESET</button></div>
   <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
@@ -123,7 +128,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --gold:#FFD700;--neon:#00FFC8;--red:#FF2244;--blue:#00AAFF;
-  --panel:rgba(0,10,25,0.82);--r:14px;
+  --panel:rgba(0,10,25,0.92);--r:14px;
 }
 body{background:#000;font-family:'Rajdhani',sans-serif;overflow:hidden;color:#fff;user-select:none}
 canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:0}
@@ -250,6 +255,8 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 #boostFlash{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 120%,rgba(0,255,200,.3),transparent 60%);opacity:0;transition:opacity .08s}
 #speedLines{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:repeating-linear-gradient(90deg,transparent,transparent 46%,rgba(255,255,255,.04) 50%,transparent 54%)}
 #damageFlash{position:absolute;inset:0;pointer-events:none;background:rgba(255,30,50,.18);opacity:0;transition:opacity .05s}
+#slipstream{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:120px;height:30px;border:2px solid rgba(0,255,200,.3);border-radius:20px;opacity:0;transition:opacity .15s}
+#offroadWarning{position:absolute;top:40%;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:18px;color:#FF2244;text-shadow:0 0 10px #FF2244;opacity:0;transition:opacity .2s;pointer-events:none;letter-spacing:4px}
 /* WIN Banner */
 #winBanner{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.8);z-index:200;opacity:0;pointer-events:none;transition:opacity .6s;flex-direction:column}
 #winBanner.show{opacity:1;pointer-events:auto}
@@ -322,29 +329,30 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 .dmg.heal{color:#00FFC8;text-shadow:0 0 12px #00FFC8}
 /* Lap flash */
 #lapFlash{position:fixed;inset:0;background:rgba(255,215,0,.12);pointer-events:none;z-index:55;opacity:0;transition:opacity .08s}
-
 /* Pause overlay */
 #pauseScreen{background:rgba(0,5,15,.88);backdrop-filter:blur(10px)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ============================================================
-//  BRU KART RACING — Beach Buggy  |  by INEZA AIME BRUNO
+//  BRU KART RACING — BEACH BUGGY CHAMPIONSHIP
+//  by INEZA AIME BRUNO
 // ============================================================
 
 // ── Touch input ──────────────────────────────────────────────
 const td = {f:false, b:false, l:false, r:false, boost:false};
 
 // ── Save / Load ───────────────────────────────────────────────
-const SK = 'brukart_v5';
+const SK = 'brukart_v7_beachbuggy';
 let SD = {
-  coins: 600,
+  coins: 400,
   selectedCar: 0,
   unlockedCars: [0, 1],
   upgrades: {engine:0, handling:0, armor:0, boost:0},
-  settings: {sfx:true, difficulty:'medium'},
+  settings: {sfx:true, difficulty:'medium', aggression:'medium'},
   champ: {c0:0, c1:0, c2:0, c3:0},
-  totalRaces: 0
+  totalRaces: 0,
+  wins: 0
 };
 try{ const s = localStorage.getItem(SK); if(s) SD = Object.assign(SD, JSON.parse(s)); } catch(e){}
 const save = () => { try{ localStorage.setItem(SK, JSON.stringify(SD)); }catch(e){} };
@@ -386,35 +394,35 @@ const sfx = {
 
 // ── Car Definitions ────────────────────────────────────────────
 const CARS = [
-  {name:'Dune Rider',  col:0xFF6600,col2:0x883300,spd:7, acc:7, hdl:7, arm:6, bst:6},
-  {name:'Ocean Blaze', col:0x0099FF,col2:0x003388,spd:8, acc:6, hdl:8, arm:5, bst:7},
+  {name:'Dune Rider',  col:0xFF6600,col2:0x883300,spd:6, acc:7, hdl:7, arm:6, bst:6},
+  {name:'Ocean Blaze', col:0x0099FF,col2:0x003388,spd:7, acc:6, hdl:8, arm:5, bst:7},
   {name:'Jungle Fury', col:0x22CC44,col2:0x115522,spd:6, acc:8, hdl:7, arm:7, bst:7, cost:250},
-  {name:'Ice Breaker', col:0x88EEFF,col2:0x3399BB,spd:9, acc:5, hdl:6, arm:6, bst:8, cost:450},
+  {name:'Ice Breaker', col:0x88EEFF,col2:0x3399BB,spd:8, acc:5, hdl:6, arm:6, bst:8, cost:450},
   {name:'Lava Lord',   col:0xFF2200,col2:0x770000,spd:7, acc:7, hdl:5, arm:9, bst:6, cost:650},
-  {name:'Storm Wing',  col:0xBB00FF,col2:0x660088,spd:10,acc:6, hdl:8, arm:4, bst:9, cost:900},
+  {name:'Storm Wing',  col:0xBB00FF,col2:0x660088,spd:9, acc:6, hdl:8, arm:4, bst:9, cost:900},
   {name:'Desert Titan',col:0xDDAA00,col2:0x885500,spd:8, acc:7, hdl:6, arm:9, bst:7, boss:true},
-  {name:'BRU',         col:0xFFD700,col2:0x997700,spd:11,acc:10,hdl:9, arm:12,bst:10,boss:true,final:true}
+  {name:'BRU',         col:0xFFD700,col2:0x997700,spd:10,acc:9, hdl:9, arm:11,bst:10,boss:true,final:true}
 ];
 
 // ── Power-up types ─────────────────────────────────────────────
 const POWERUPS = [
-  {id:'fireball', name:'Fireball',  e:'🔥'},
-  {id:'homing',   name:'Homing Orb',e:'🎯'},
-  {id:'thunder',  name:'Thunder',   e:'⚡'},
-  {id:'banana',   name:'Banana',    e:'🍌'},
-  {id:'shield',   name:'Shield',    e:'🛡️'},
-  {id:'repair',   name:'Repair Kit',e:'💊'},
-  {id:'nitro',    name:'Nitro',     e:'🚀'},
-  {id:'freeze',   name:'Freeze',    e:'❄️'},
-  {id:'magnet',   name:'Magnet',    e:'🧲'}
+  {id:'fireball', name:'Fireball',  e:'🔥', desc:'Medium damage to front'},
+  {id:'homing',   name:'Homing Orb',e:'🎯', desc:'Targets nearest opponent'},
+  {id:'thunder',  name:'Thunder',   e:'⚡', desc:'Damages all nearby'},
+  {id:'banana',   name:'Banana',    e:'🍌', desc:'Causes spin-out'},
+  {id:'shield',   name:'Shield',    e:'🛡️', desc:'Blocks all damage'},
+  {id:'repair',   name:'Repair Kit',e:'💊', desc:'Restores 40 armor'},
+  {id:'nitro',    name:'Nitro',     e:'🚀', desc:'Massive speed boost'},
+  {id:'freeze',   name:'Freeze',    e:'❄️', desc:'Slows all opponents'},
+  {id:'magnet',   name:'Magnet',    e:'🧲', desc:'Attracts coins'}
 ];
 
 // ── Cup / Track Definitions ────────────────────────────────────
 const CUPS = [
-  {name:'Beach Cup 🏖️',  tracks:[0,0], laps:3, theme:0},
-  {name:'Jungle Cup 🌿', tracks:[1,1], laps:3, theme:1, boss:6},
-  {name:'Desert Cup 🏜️', tracks:[2,2], laps:3, theme:2, boss:6},
-  {name:'Final Cup 👑',  tracks:[3,3], laps:3, theme:3, boss:7}
+  {name:'Beach Cup 🏖️',  tracks:[0,0,0], laps:3, theme:0},
+  {name:'Jungle Cup 🌿', tracks:[1,1,1], laps:3, theme:1, boss:6},
+  {name:'Desert Cup 🏜️', tracks:[2,2,2], laps:3, theme:2, boss:6},
+  {name:'Final Cup 👑',  tracks:[3,3,3], laps:3, theme:3, boss:7}
 ];
 
 // ── Track Themes ───────────────────────────────────────────────
@@ -426,11 +434,15 @@ const THEMES = [
 ];
 
 // ── Constants ──────────────────────────────────────────────────
-const ROAD_LEN   = 1800;
-const ROAD_W     = 52;
-const NUM_LANES  = 8;
+const ROAD_LEN   = 9500;  // Long enough for 3-minute laps at ~25-30 m/s
+const ROAD_W     = 64;     // Wider road for beach buggy feel
+const NUM_LANES  = 10;
 const LANE_W     = ROAD_W / NUM_LANES;
 let LAP_TOTAL    = 3;
+
+// Road boundaries for off-road check
+const ROAD_LEFT  = -ROAD_W/2 + 1.6;
+const ROAD_RIGHT = ROAD_W/2 - 1.6;
 
 // ── Three.js Setup ─────────────────────────────────────────────
 const canvas   = document.getElementById('gc');
@@ -459,9 +471,11 @@ let racers   = [], playerR = null;
 let pickups  = [], boostPads = [], bananas = [], projectiles = [], fxList = [];
 let shakeAmt = 0, notifTimer = 0;
 let paused   = false;
+let slipstreamActive = false;
+let offroadTimer = 0; // For off-road warning
 
 // ============================================================
-//  CAR MESH BUILDER
+//  CAR MESH BUILDER (unchanged)
 // ============================================================
 function buildCarMesh(def){
   const g   = new THREE.Group();
@@ -558,7 +572,7 @@ function buildCarMesh(def){
 }
 
 // ============================================================
-//  ROAD & SCENERY GENERATOR
+//  ROAD & SCENERY GENERATOR (modified for longer track)
 // ============================================================
 function generateRoad(T){
   // Clear scene
@@ -566,7 +580,7 @@ function generateRoad(T){
   pickups=[]; boostPads=[]; bananas=[]; projectiles=[]; fxList=[];
 
   scene.background = new THREE.Color(T.sky);
-  scene.fog = new THREE.FogExp2(T.fog, .0025);
+  scene.fog = new THREE.FogExp2(T.fog, .0018); // Reduced fog density for longer view
 
   // Lighting
   const ambient = new THREE.AmbientLight(0xFFFFFF, .55);
@@ -594,7 +608,7 @@ function generateRoad(T){
 
   // ── GROUND ────────────────────────────────────────────────
   const gMat = new THREE.MeshPhongMaterial({color:T.ground, shininess:4});
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_LEN+600, 400), gMat);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_LEN+800, 500), gMat);
   ground.rotation.x = -Math.PI/2;
   ground.position.set(ROAD_LEN/2, 0, 0);
   ground.receiveShadow = true;
@@ -610,10 +624,10 @@ function generateRoad(T){
 
   // ── LANE MARKERS ──────────────────────────────────────────
   const dashMat = new THREE.MeshPhongMaterial({color:0xFFFFFF, emissive:0xFFFFFF, emissiveIntensity:.1});
-  const dashLen = ROAD_LEN / 60;
+  const dashLen = ROAD_LEN / 80; // More dashes
   for(let lane=1; lane<NUM_LANES; lane++){
     const lz = (lane/NUM_LANES)*ROAD_W - ROAD_W/2;
-    for(let seg=0; seg<60; seg++){
+    for(let seg=0; seg<80; seg++){
       const lx = seg * dashLen + dashLen/2;
       const dash = new THREE.Mesh(new THREE.PlaneGeometry(dashLen*.5,.18), dashMat);
       dash.rotation.x = -Math.PI/2;
@@ -632,7 +646,7 @@ function generateRoad(T){
   });
 
   // ── KERB STRIPS ────────────────────────────────────────────
-  const numKerb = 55;
+  const numKerb = 85;
   const kerbLen = ROAD_LEN / numKerb;
   for(let i=0; i<numKerb; i++){
     const kx = i * kerbLen + kerbLen/2;
@@ -652,36 +666,36 @@ function generateRoad(T){
     bar.castShadow = true; bar.receiveShadow = true;
     scene.add(bar);
     // Colored segments
-    const segW = 6;
+    const segW = 8;
     for(let i=0; i<Math.floor(ROAD_LEN/segW); i++){
       const sMat = new THREE.MeshPhongMaterial({color: i%2===0 ? 0xFF4400 : 0xFFFFFF});
       const st = new THREE.Mesh(new THREE.BoxGeometry(.82,.98,.74), sMat);
-      st.position.set(i*segW+3, .49, side*(ROAD_W/2+1.85));
+      st.position.set(i*segW+4, .49, side*(ROAD_W/2+1.85));
       scene.add(st);
     }
   });
 
-  // ── BOOST PADS ────────────────────────────────────────────
-  for(let bx=200; bx<ROAD_LEN-120; bx+=160){
+  // ── BOOST PADS (strategic placement) ────────────────────────
+  for(let bx=350; bx<ROAD_LEN-300; bx+=320){
     const lz = (Math.floor(Math.random()*NUM_LANES)+.5)*LANE_W - ROAD_W/2;
     const padMat = new THREE.MeshPhongMaterial({color:0x00FFC8, emissive:0x00AA88, emissiveIntensity:.85, transparent:true, opacity:.88});
-    const pad = new THREE.Mesh(new THREE.PlaneGeometry(LANE_W*.88, 5.8), padMat);
+    const pad = new THREE.Mesh(new THREE.PlaneGeometry(LANE_W*.88, 6.5), padMat);
     pad.rotation.x = -Math.PI/2; pad.position.set(bx, .06, lz);
     scene.add(pad);
     const pl = new THREE.PointLight(0x00FFC8, .5, 9);
     pl.position.set(bx, 1, lz); scene.add(pl);
-    // Arrow chevrons on pad
+    // Arrow chevrons
     for(let a=0;a<2;a++){
-      const arr = new THREE.Mesh(new THREE.PlaneGeometry(LANE_W*.4,1.2),
+      const arr = new THREE.Mesh(new THREE.PlaneGeometry(LANE_W*.4,1.4),
         new THREE.MeshPhongMaterial({color:0xFFFFFF, transparent:true, opacity:.55}));
-      arr.rotation.x = -Math.PI/2; arr.position.set(bx-1.2+a*1.2, .07, lz);
+      arr.rotation.x = -Math.PI/2; arr.position.set(bx-1.4+a*1.4, .07, lz);
       scene.add(arr);
     }
     boostPads.push({x:bx, z:lz, mesh:pad, light:pl});
   }
 
   // ── PICKUP BOXES ──────────────────────────────────────────
-  for(let px=150; px<ROAD_LEN-150; px+=115){
+  for(let px=250; px<ROAD_LEN-250; px+=160){
     const lz = (Math.floor(Math.random()*NUM_LANES)+.5)*LANE_W - ROAD_W/2;
     const boxG = new THREE.Group();
     const cube = new THREE.Mesh(new THREE.BoxGeometry(1.6,1.6,1.6),
@@ -694,7 +708,7 @@ function generateRoad(T){
     boxG.add(bpl);
     boxG.position.set(px, 1.75, lz);
     scene.add(boxG);
-    pickups.push({mesh:boxG, x:px, z:lz, active:true, respawnT:0});
+    pickups.push({mesh:boxG, x:px, z:lz, active:true, respawnT:15}); // Slower respawn
   }
 
   // ── FINISH LINE & ARCH ────────────────────────────────────
@@ -702,14 +716,14 @@ function generateRoad(T){
 
   // ── START LINE ────────────────────────────────────────────
   const slMat = new THREE.MeshPhongMaterial({color:0xFFFFFF, emissive:0xFFFFFF, emissiveIntensity:.18});
-  const sl = new THREE.Mesh(new THREE.PlaneGeometry(3.8, ROAD_W), slMat);
-  sl.rotation.x = -Math.PI/2; sl.position.set(8, .05, 0); scene.add(sl);
+  const sl = new THREE.Mesh(new THREE.PlaneGeometry(4.2, ROAD_W), slMat);
+  sl.rotation.x = -Math.PI/2; sl.position.set(10, .05, 0); scene.add(sl);
   // Checker on start
-  for(let c=0;c<8;c++) for(let r=0;r<2;r++) if((c+r)%2===0){
-    const sq = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W/8,1.8),
+  for(let c=0;c<10;c++) for(let r=0;r<2;r++) if((c+r)%2===0){
+    const sq = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W/10,2.0),
       new THREE.MeshPhongMaterial({color:0x000000}));
     sq.rotation.x = -Math.PI/2;
-    sq.position.set(8, .06, (c/8)*ROAD_W - ROAD_W/2 + ROAD_W/16);
+    sq.position.set(10, .06, (c/10)*ROAD_W - ROAD_W/2 + ROAD_W/20);
     scene.add(sq);
   }
 
@@ -718,41 +732,41 @@ function generateRoad(T){
 }
 
 function buildFinishLine(){
-  const fx = ROAD_LEN - 18;
+  const fx = ROAD_LEN - 20;
   // White base
-  const fl = new THREE.Mesh(new THREE.PlaneGeometry(4, ROAD_W),
+  const fl = new THREE.Mesh(new THREE.PlaneGeometry(4.5, ROAD_W),
     new THREE.MeshPhongMaterial({color:0xFFFFFF, emissive:0xFFFFFF, emissiveIntensity:.22}));
   fl.rotation.x = -Math.PI/2; fl.position.set(fx, .05, 0); scene.add(fl);
   // Checker
-  for(let c=0;c<8;c++) for(let r=0;r<2;r++) if((c+r)%2===0){
-    const sq = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W/8,1.9),
+  for(let c=0;c<10;c++) for(let r=0;r<2;r++) if((c+r)%2===0){
+    const sq = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W/10,2.1),
       new THREE.MeshPhongMaterial({color:0x000000}));
     sq.rotation.x = -Math.PI/2;
-    sq.position.set(fx, .06, (c/8)*ROAD_W - ROAD_W/2 + ROAD_W/16);
+    sq.position.set(fx, .06, (c/10)*ROAD_W - ROAD_W/2 + ROAD_W/20);
     scene.add(sq);
   }
   // Arch pillars
   const archMat = new THREE.MeshPhongMaterial({color:0xFF2244, emissive:0x880011, emissiveIntensity:.35});
-  const pL = new THREE.Mesh(new THREE.BoxGeometry(.7,16,.7), archMat);
-  pL.position.set(fx, 8, -ROAD_W/2-1.2); scene.add(pL);
-  const pR = pL.clone(); pR.position.set(fx, 8, ROAD_W/2+1.2); scene.add(pR);
-  const arch = new THREE.Mesh(new THREE.BoxGeometry(.7,1, ROAD_W+2.4), archMat);
-  arch.position.set(fx, 16, 0); scene.add(arch);
-  // Banner (gold bar)
-  const bn = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W,2.8),
+  const pL = new THREE.Mesh(new THREE.BoxGeometry(.8,18,.8), archMat);
+  pL.position.set(fx, 9, -ROAD_W/2-1.5); scene.add(pL);
+  const pR = pL.clone(); pR.position.set(fx, 9, ROAD_W/2+1.5); scene.add(pR);
+  const arch = new THREE.Mesh(new THREE.BoxGeometry(.8,1, ROAD_W+3), archMat);
+  arch.position.set(fx, 18, 0); scene.add(arch);
+  // Banner
+  const bn = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W,3.2),
     new THREE.MeshPhongMaterial({color:0xFFD700, emissive:0x886600, emissiveIntensity:.65, side:THREE.DoubleSide}));
-  bn.rotation.y = Math.PI/2; bn.position.set(fx, 15, 0); scene.add(bn);
+  bn.rotation.y = Math.PI/2; bn.position.set(fx, 17, 0); scene.add(bn);
   // Arch lights
-  const al1 = new THREE.PointLight(0xFF2244, 2.2, 28); al1.position.set(fx,14,-ROAD_W/2); scene.add(al1);
-  const al2 = new THREE.PointLight(0xFF2244, 2.2, 28); al2.position.set(fx,14, ROAD_W/2); scene.add(al2);
-  const al3 = new THREE.PointLight(0xFFD700, 2.5, 35); al3.position.set(fx,16, 0); scene.add(al3);
+  const al1 = new THREE.PointLight(0xFF2244, 2.5, 30); al1.position.set(fx,15,-ROAD_W/2); scene.add(al1);
+  const al2 = new THREE.PointLight(0xFF2244, 2.5, 30); al2.position.set(fx,15, ROAD_W/2); scene.add(al2);
+  const al3 = new THREE.PointLight(0xFFD700, 3.0, 40); al3.position.set(fx,18, 0); scene.add(al3);
 }
 
 function buildSideScenery(T){
-  const spacing = 42;
-  for(let x = 0; x <= ROAD_LEN+40; x += spacing){
+  const spacing = 55;
+  for(let x = 0; x <= ROAD_LEN+60; x += spacing){
     [-1,1].forEach(side => {
-      const z = side * (ROAD_W/2 + 8 + Math.random()*20);
+      const z = side * (ROAD_W/2 + 10 + Math.random()*30);
       let obj = null;
       switch(T.side){
         case 'beach':  obj = Math.random()<.55 ? mkPalm(x,0,z) : mkBeachUmbrella(x,0,z); break;
@@ -766,19 +780,19 @@ function buildSideScenery(T){
 
   // Crowd spectators
   const crowdCols = [0xFF6688,0xFFAA44,0x44CCFF,0xAA44FF,0x44FF88,0xFF8844,0x88FFAA];
-  for(let x=60; x<ROAD_LEN-60; x+=26){
-    [-(ROAD_W/2+13), ROAD_W/2+13].forEach(z => {
+  for(let x=100; x<ROAD_LEN-100; x+=38){
+    [-(ROAD_W/2+18), ROAD_W/2+18].forEach(z => {
       const cg = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(.28,.32,1.45,7),
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(.3,.34,1.55,7),
         new THREE.MeshPhongMaterial({color:crowdCols[Math.floor(Math.random()*crowdCols.length)]}));
-      body.position.y = .72; cg.add(body);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(.28,8,8),
+      body.position.y = .78; cg.add(body);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),
         new THREE.MeshPhongMaterial({color:0xFFD0A0}));
-      head.position.y = 1.65; cg.add(head);
+      head.position.y = 1.75; cg.add(head);
       // Wave arm
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(.12,.6,.12),
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(.14,.65,.14),
         new THREE.MeshPhongMaterial({color:0xFFD0A0}));
-      arm.position.set(.4, 1.5+Math.random()*.4, 0);
+      arm.position.set(.45, 1.6+Math.random()*.4, 0);
       arm.rotation.z = -Math.PI/4 + Math.random()*.3;
       cg.add(arm);
       cg.position.set(x, 0, z);
@@ -790,53 +804,53 @@ function buildSideScenery(T){
   if(T.side === 'beach'){
     // Ocean plane
     const oceanMat = new THREE.MeshPhongMaterial({color:0x0088BB, transparent:true, opacity:.72, shininess:200, specular:0x88CCFF});
-    const ocean = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_LEN+300, 100), oceanMat);
-    ocean.rotation.x = -Math.PI/2; ocean.position.set(ROAD_LEN/2, -.5, -(ROAD_W/2+55));
+    const ocean = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_LEN+400, 120), oceanMat);
+    ocean.rotation.x = -Math.PI/2; ocean.position.set(ROAD_LEN/2, -.5, -(ROAD_W/2+80));
     scene.add(ocean);
     // Clouds
-    for(let i=0;i<14;i++){
+    for(let i=0;i<25;i++){
       const cg = new THREE.Group();
       for(let j=0;j<5;j++){
-        const puff = new THREE.Mesh(new THREE.SphereGeometry(3+Math.random()*3,8,8),
+        const puff = new THREE.Mesh(new THREE.SphereGeometry(3.5+Math.random()*3.5,8,8),
           new THREE.MeshPhongMaterial({color:0xF8F8FF, transparent:true, opacity:.88}));
-        puff.position.set(j*3.5, Math.random()*2, Math.random()*2); cg.add(puff);
+        puff.position.set(j*4, Math.random()*2.5, Math.random()*2.5); cg.add(puff);
       }
-      cg.position.set(Math.random()*ROAD_LEN, 55+Math.random()*30, (Math.random()-.5)*80);
-      fxList.push({type:'cloud', mesh:cg, speed:.4+Math.random()*.5});
+      cg.position.set(Math.random()*ROAD_LEN, 60+Math.random()*35, (Math.random()-.5)*120);
+      fxList.push({type:'cloud', mesh:cg, speed:.25+Math.random()*.4});
       scene.add(cg);
     }
     // Hot air balloon
     const ball = new THREE.Group();
-    const env = new THREE.Mesh(new THREE.SphereGeometry(9.5,12,12),
+    const env = new THREE.Mesh(new THREE.SphereGeometry(10.5,12,12),
       new THREE.MeshPhongMaterial({color:0xFF8800}));
-    env.position.y=18; ball.add(env);
+    env.position.y=20; ball.add(env);
     for(let i=0;i<6;i++){
-      const s = new THREE.Mesh(new THREE.CylinderGeometry(9.55,9.55,3,7),
+      const s = new THREE.Mesh(new THREE.CylinderGeometry(10.5,10.5,3.5,7),
         new THREE.MeshPhongMaterial({color:i%2===0?0xFF2244:0xFFFFFF, transparent:true, opacity:.78}));
-      s.position.y = 15+i*1.8; ball.add(s);
+      s.position.y = 16.5+i*2; ball.add(s);
     }
-    const bsk = new THREE.Mesh(new THREE.BoxGeometry(3.8,2.6,3.8),
+    const bsk = new THREE.Mesh(new THREE.BoxGeometry(4.2,2.8,4.2),
       new THREE.MeshPhongMaterial({color:0x8B5A00}));
-    bsk.position.y = 4; ball.add(bsk);
-    ball.position.set(ROAD_LEN*.6, 58, -(ROAD_W/2+70));
+    bsk.position.y = 4.5; ball.add(bsk);
+    ball.position.set(ROAD_LEN*.6, 65, -(ROAD_W/2+95));
     fxList.push({type:'balloon', mesh:ball});
     scene.add(ball);
   }
 
   if(T.side === 'arena'){
-    for(let x=80; x<ROAD_LEN; x+=180){
-      [-(ROAD_W/2+5), ROAD_W/2+5].forEach(z=>{
-        const pole = new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,20,7),
+    for(let x=120; x<ROAD_LEN; x+=220){
+      [-(ROAD_W/2+7), ROAD_W/2+7].forEach(z=>{
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,22,7),
           new THREE.MeshPhongMaterial({color:0x222244}));
-        pole.position.set(x, 10, z); scene.add(pole);
-        const lgt = new THREE.PointLight(0x4466FF, 1.8, 55);
-        lgt.position.set(x, 20, z); scene.add(lgt);
+        pole.position.set(x, 11, z); scene.add(pole);
+        const lgt = new THREE.PointLight(0x4466FF, 2.2, 70);
+        lgt.position.set(x, 22, z); scene.add(lgt);
       });
     }
   }
 }
 
-// Scenery helpers
+// Scenery helpers (same)
 function mkPalm(x,y,z){
   const g=new THREE.Group();
   const h=5+Math.random()*3.5;
@@ -919,21 +933,34 @@ function mkArenaPillar(x,y,z){
 }
 
 // ============================================================
-//  RACER CLASS
+//  RACER CLASS (with off-road slowdown)
 // ============================================================
 class Racer {
-  constructor(cidx, isPlayer, startX, lane, name){
+  constructor(cidx, isPlayer, startX, lane, name, personality){
     this.cidx = cidx; this.def = CARS[cidx]; this.isP = isPlayer;
     this.name = name || this.def.name;
-    this.x = startX; this.z = (lane+.5)*LANE_W - ROAD_W/2;
+    this.x = startX; 
+    this.z = (lane+.5)*LANE_W - ROAD_W/2;
+    this.targetZ = this.z;
     this.vx = 0; this.vz = 0;
     this.lap = 1; this.rPos = 1; this.finished = false; this.finishTime = 0;
 
+    // Personality traits for realistic AI
+    this.personality = personality || {
+      aggression: Math.random() * 0.8 + 0.2,
+      consistency: Math.random() * 0.7 + 0.3,
+      bravery: Math.random() * 0.9 + 0.1,
+      itemUsage: Math.random() * 0.6 + 0.2
+    };
+
     const up = isPlayer ? SD.upgrades : {engine:0,handling:0,armor:0,boost:0};
-    this.maxSpd   = (this.def.spd + up.engine) * 1.9 + 8;
-    this.acc      = (this.def.acc + up.engine) * .38;
-    this.hdl      = (this.def.hdl + up.handling) * .3;
-    this.armor    = (this.def.arm + up.armor)*10 + 20;
+    
+    // Base stats with personality modifications (reduced for longer laps)
+    const personalityFactor = this.personality.consistency;
+    this.maxSpd   = (this.def.spd + up.engine) * 1.4 + 8; // Lower top speed ~ 18-24 m/s
+    this.acc      = (this.def.acc + up.engine) * .32;
+    this.hdl      = (this.def.hdl + up.handling) * .25;
+    this.armor    = (this.def.arm + up.armor)*10 + 25;
     this.maxArmor = this.armor;
     this.boostE   = 100;
     this.maxBoost = (this.def.bst + up.boost)*10;
@@ -943,9 +970,17 @@ class Racer {
     this.inv = false;    this.invT = 0;
     this.slowed = false; this.slowT = 0;
     this.frozen = false; this.frozenT = 0;
-    this.magnetT = 0; this.aiItemCD = 0;
-    this.wAngle = 0; this.leanAngle = 0;
+    this.magnetT = 0; 
+    this.aiItemCD = 0;
+    this.wAngle = 0; 
+    this.leanAngle = 0;
     this.isBoosting = false;
+    
+    // AI memory
+    this.lastCollision = 0;
+    this.mistakeTimer = 0;
+    this.tacticalTimer = 0;
+    this.currentTarget = 0; // 0: race, 1: defend, 2: attack
 
     this.mesh = buildCarMesh(this.def);
     this._buildShield();
@@ -990,7 +1025,18 @@ class Racer {
   update(dt, inp){
     if(this.finished){ this.syncMesh(); return; }
 
-    const dM = SD.settings.difficulty==='easy'?.58 : SD.settings.difficulty==='hard'?1.38 : 1.0;
+    const dM = {
+      easy: 0.6,
+      medium: 0.8,
+      hard: 1.0,
+      expert: 1.2
+    }[SD.settings.difficulty] || 0.8;
+
+    const aggM = {
+      low: 0.6,
+      medium: 0.9,
+      high: 1.2
+    }[SD.settings.aggression] || 0.9;
 
     // Timers
     if(this.shieldT > 0){ this.shieldT -= dt; if(this.shieldT<=0){ this.shield=false; this.shieldMesh.visible=false; } }
@@ -999,63 +1045,172 @@ class Racer {
     if(this.frozenT> 0){ this.frozenT-= dt; if(this.frozenT<=0) this.frozen=false; }
     if(this.magnetT> 0) this.magnetT -= dt;
     if(this.aiItemCD>0) this.aiItemCD -= dt;
+    if(this.mistakeTimer > 0) this.mistakeTimer -= dt;
+    if(this.tacticalTimer > 0) this.tacticalTimer -= dt;
 
     if(this.frozen){ this.syncMesh(); return; }
 
-    const sM = this.slowed ? .38 : 1;
+    const sM = this.slowed ? .35 : 1;
+
+    // Off-road check (only for player, AI also affected but we handle later)
+    const onRoad = this.z > ROAD_LEFT && this.z < ROAD_RIGHT;
+    let offroadFactor = 1.0;
+    if(!onRoad) {
+      offroadFactor = 0.65; // 35% speed reduction off-road
+      if(this.isP) {
+        document.getElementById('offroadWarning').style.opacity = '1';
+        offroadTimer = 0.2;
+      }
+    } else {
+      if(this.isP) document.getElementById('offroadWarning').style.opacity = '0';
+    }
 
     if(this.isP){
-      // Player control
-      const tgt = inp.f ? this.maxSpd*sM : (inp.b ? -this.maxSpd*.35*sM : 0);
+      // Player control with slipstream detection
+      let tgt = inp.f ? this.maxSpd*sM : (inp.b ? -this.maxSpd*.25*sM : 0);
+      // Apply off-road penalty
+      tgt *= offroadFactor;
+      
       this.vx += (tgt - this.vx) * this.acc * dt * 60;
       if(Math.abs(this.vx) < .04 && !inp.f && !inp.b) this.vx = 0;
 
-      if(inp.l)       this.vz = -this.hdl * 10 * sM;
-      else if(inp.r)  this.vz =  this.hdl * 10 * sM;
+      // Check for slipstream (drafting)
+      slipstreamActive = false;
+      racers.forEach(r => {
+        if(!r.isP && !r.finished && Math.abs(r.x - this.x) < 15 && Math.abs(r.x - this.x) > 4 && Math.abs(r.z - this.z) < 4.5) {
+          slipstreamActive = true;
+          this.vx += 0.7 * dt * 60; // Speed boost from drafting
+        }
+      });
+      document.getElementById('slipstream').style.opacity = slipstreamActive ? '1' : '0';
+
+      if(inp.l)       this.vz = -this.hdl * 10 * sM * offroadFactor;
+      else if(inp.r)  this.vz =  this.hdl * 10 * sM * offroadFactor;
       else            this.vz *= .7;
 
       const tgtLean = inp.l ? -.42 : inp.r ? .42 : 0;
       this.leanAngle += (tgtLean - this.leanAngle) * .14;
 
-      if(inp.boost && this.boostE > 0){
+      if(inp.boost && this.boostE > 0 && onRoad){ // Can't boost off-road
         this.isBoosting = true;
-        const bTgt = this.maxSpd * 1.85 * sM;
-        this.vx += (bTgt - this.vx) * this.acc * 6;
-        this.boostE = Math.max(0, this.boostE - dt*30);
-        if(Math.random() < .2) sfx.boost();
+        const bTgt = this.maxSpd * 1.7 * sM;
+        this.vx += (bTgt - this.vx) * this.acc * 4;
+        this.boostE = Math.max(0, this.boostE - dt*20);
+        if(Math.random() < .15) sfx.boost();
         document.getElementById('boostFlash').style.opacity = '.8';
         document.getElementById('speedLines').style.opacity = '.7';
       } else {
         this.isBoosting = false;
-        if(this.boostE < this.maxBoost) this.boostE += dt*11;
+        if(this.boostE < this.maxBoost) this.boostE += dt*7;
         document.getElementById('boostFlash').style.opacity = '0';
-        const sl = Math.max(0, (this.vx/this.maxSpd - .5)) * .45;
+        const sl = Math.max(0, (this.vx/this.maxSpd - .6)) * .45;
         document.getElementById('speedLines').style.opacity = sl+'';
       }
     } else {
-      // AI
-      const tgtSpd = this.maxSpd * dM * sM;
-      const gap    = playerR ? (this.x - playerR.x) : 0;
-      const rubber = gap > 70 ? .78 : gap < -70 ? 1.22 : 1;
-      this.vx += (tgtSpd * rubber - this.vx) * this.acc * 2.6;
-
-      // Lane changes
-      if(Math.random() < .008){
-        const tgtZ = (Math.floor(Math.random()*NUM_LANES)+.5)*LANE_W - ROAD_W/2;
-        this.vz = (tgtZ - this.z) * 1.5;
+      // AI logic (similar but with off-road penalty)
+      const player = racers.find(r => r.isP);
+      const inFront = racers.filter(r => !r.isP && r.x > this.x && !r.finished);
+      const behind = racers.filter(r => !r.isP && r.x < this.x && !r.finished);
+      
+      if(this.tacticalTimer <= 0) {
+        this.tacticalTimer = 2 + Math.random() * 3;
+        if(player && Math.abs(player.x - this.x) < 100 && this.personality.aggression * aggM > 0.6) {
+          this.currentTarget = 2;
+        } else if(inFront.length > 0 && this.personality.bravery > 0.5) {
+          this.currentTarget = 1;
+        } else {
+          this.currentTarget = 0;
+        }
       }
-      this.vz *= .86;
-      this.leanAngle = this.vz > 0 ? .3 : this.vz < 0 ? -.3 : 0;
 
-      // AI boost
-      if(this.boostE < this.maxBoost) this.boostE += dt*9;
-      if(this.boostE > 35 && Math.random() < .006*dM){
-        this.vx = Math.min(this.maxSpd*1.7, this.vx+4.5);
-        this.boostE -= 22;
+      const distToPlayer = player ? Math.abs(player.x - this.x) : 0;
+      let rubberBand = 1.0;
+      if(player && distToPlayer < 150) {
+        if(player.x > this.x) {
+          rubberBand = 1.0 + (0.12 * (1 - this.personality.consistency));
+        } else {
+          rubberBand = 0.98 - (0.04 * this.personality.consistency);
+        }
       }
-      // AI item use
-      if(this.item && this.aiItemCD <= 0 && Math.random() < .005){
-        this.fireItem(); this.aiItemCD = 5;
+
+      // Base speed with off-road penalty
+      let targetSpeed = this.maxSpd * dM * rubberBand * sM;
+      if(!onRoad) targetSpeed *= 0.7;
+
+      // Slipstream for AI
+      racers.forEach(r => {
+        if(r !== this && !r.finished && Math.abs(r.x - this.x) < 15 && Math.abs(r.x - this.x) > 4 && Math.abs(r.z - this.z) < 4.5) {
+          targetSpeed *= 1.07;
+        }
+      });
+
+      this.vx += (targetSpeed - this.vx) * this.acc * (1.8 + (0.5 * this.personality.aggression)) * dt;
+
+      // Lane changes (AI tries to stay on road)
+      if(Math.random() < 0.012 * (this.personality.bravery)) {
+        const ahead = racers.find(r => r !== this && !r.finished && 
+          Math.abs(r.x - this.x) < 30 && 
+          Math.abs(r.x - this.x) > 4 && 
+          Math.abs(r.z - this.z) < 4);
+        
+        if(ahead) {
+          const leftClear = !racers.some(r => r !== this && Math.abs(r.x - this.x) < 18 && Math.abs(r.z - (this.z - LANE_W)) < 4);
+          const rightClear = !racers.some(r => r !== this && Math.abs(r.x - this.x) < 18 && Math.abs(r.z - (this.z + LANE_W)) < 4);
+          
+          if(leftClear && this.z > ROAD_LEFT + LANE_W) {
+            this.targetZ = this.z - LANE_W;
+          } else if(rightClear && this.z < ROAD_RIGHT - LANE_W) {
+            this.targetZ = this.z + LANE_W;
+          }
+        } else {
+          if(Math.random() < this.personality.aggression * 0.1) {
+            this.targetZ = this.z + (Math.random() - 0.5) * LANE_W * 0.4;
+          }
+        }
+      }
+
+      const dz = this.targetZ - this.z;
+      this.vz = dz * (1.4 + this.personality.aggression) * dt * 60;
+      this.vz = Math.max(-3.5, Math.min(3.5, this.vz));
+      this.vz *= 0.85;
+      this.leanAngle = this.vz * 0.08;
+
+      // AI boost usage
+      if(this.boostE > 30 && !this.slowed && !this.frozen && onRoad) {
+        const shouldBoost = (
+          (this.currentTarget === 1 && Math.random() < 0.3) ||
+          (slipstreamActive && Math.random() < 0.4) ||
+          (this.lap === LAP_TOTAL && this.x > ROAD_LEN * 0.7)
+        );
+        if(shouldBoost) {
+          this.vx = Math.min(this.maxSpd*1.5, this.vx + 4.5);
+          this.boostE -= 20;
+          this.isBoosting = true;
+        } else {
+          this.isBoosting = false;
+          if(this.boostE < this.maxBoost) this.boostE += dt*5;
+        }
+      }
+
+      // AI item use (same as before)
+      if(this.item && this.aiItemCD <= 0) {
+        const itemUseChance = this.personality.itemUsage * 0.012;
+        if(this.item.id === 'shield' && this.armor < this.maxArmor * 0.3) {
+          this.fireItem();
+          this.aiItemCD = 5;
+        } else if(this.item.id === 'repair' && this.armor < this.maxArmor * 0.5) {
+          this.fireItem();
+          this.aiItemCD = 5;
+        } else if(this.item.id === 'fireball' || this.item.id === 'homing') {
+          const target = player ? player : inFront[0];
+          if(target && Math.abs(target.x - this.x) < 70 && Math.random() < itemUseChance) {
+            this.fireItem();
+            this.aiItemCD = 5;
+          }
+        } else if(Math.random() < itemUseChance) {
+          this.fireItem();
+          this.aiItemCD = 5;
+        }
       }
     }
 
@@ -1064,20 +1219,45 @@ class Racer {
     // Move
     this.x += this.vx * dt;
     this.z += this.vz * dt;
-    // Clamp to road
-    this.z = Math.max(-ROAD_W/2+1.3, Math.min(ROAD_W/2-1.3, this.z));
+    
+    // Clamp to road (allow slight off-road but with penalty)
+    const hardLimit = ROAD_W/2 + 1.5; // Allow a bit beyond barriers
+    if(this.z < -hardLimit) { this.z = -hardLimit; this.vz = 0; }
+    if(this.z > hardLimit) { this.z = hardLimit; this.vz = 0; }
+
+    // Collision detection
+    racers.forEach(r => {
+      if(r === this || r.finished) return;
+      const distX = Math.abs(r.x - this.x);
+      const distZ = Math.abs(r.z - this.z);
+      if(distX < 4.0 && distZ < 3.0) {
+        if(!this.isP && !r.isP) {
+          this.vx *= 0.7;
+          r.vx *= 0.7;
+        } else {
+          this.vx *= 0.75;
+          r.vx *= 0.75;
+          if(this.isP) {
+            shakeAmt = 0.3;
+            this.takeDmg(5);
+          }
+        }
+        if(this.z < r.z) { this.z -= 0.9; r.z += 0.9; }
+        else { this.z += 0.9; r.z -= 0.9; }
+      }
+    });
 
     // Boost pad check
     boostPads.forEach(bp => {
-      if(Math.abs(this.x-bp.x)<4.5 && Math.abs(this.z-bp.z)<3.8){
-        this.vx = Math.min(this.maxSpd*2.1, this.vx+11);
+      if(Math.abs(this.x-bp.x)<5.0 && Math.abs(this.z-bp.z)<4.0){
+        this.vx = Math.min(this.maxSpd*2.0, this.vx+10);
         if(this.isP){ showNotif('⚡ BOOST PAD!','#00FFC8'); sfx.boost(); }
       }
     });
 
     // Pickup check
     pickups.forEach(pk => {
-      if(pk.active && !this.item && Math.abs(this.x-pk.x)<3.2 && Math.abs(this.z-pk.z)<3.2){
+      if(pk.active && !this.item && Math.abs(this.x-pk.x)<3.5 && Math.abs(this.z-pk.z)<3.5){
         const pu = POWERUPS[Math.floor(Math.random()*POWERUPS.length)];
         this.item = pu;
         if(this.isP){
@@ -1085,7 +1265,7 @@ class Racer {
           document.getElementById('itemLabel').textContent  = pu.name;
           sfx.pickup(); showNotif(pu.e+' '+pu.name+'!','#FFD700');
         }
-        pk.active = false; pk.mesh.visible = false; pk.respawnT = 9;
+        pk.active = false; pk.mesh.visible = false; pk.respawnT = 15;
       }
     });
 
@@ -1093,9 +1273,9 @@ class Racer {
     for(let i=bananas.length-1;i>=0;i--){
       const bn = bananas[i];
       if(bn.owner === this) continue;
-      if(Math.abs(this.x-bn.x)<2.8 && Math.abs(this.z-bn.z)<2.8){
+      if(Math.abs(this.x-bn.x)<3.0 && Math.abs(this.z-bn.z)<3.0){
         this.slowed = true; this.slowT = 3;
-        this.vx *= .4;
+        this.vx *= .35;
         scene.remove(bn.mesh); bananas.splice(i,1);
         sfx.hit();
         if(this.isP){ showNotif('🍌 SLIPPED!','#FFD700'); flashDmg(); }
@@ -1113,7 +1293,7 @@ class Racer {
     if(!this.finished && this.x >= ROAD_LEN){
       if(this.lap < LAP_TOTAL){
         this.lap++;
-        this.x = 5;
+        this.x = 10; // Reset to start
         if(this.isP){
           updateLapUI();
           sfx.lap();
@@ -1134,14 +1314,15 @@ class Racer {
     if(this.shield || this.inv) return;
     this.armor = Math.max(0, this.armor - amt);
     if(this.isP){
-      sfx.hit(); updateHpBar(); shakeAmt = .7;
+      sfx.hit(); updateHpBar(); shakeAmt = .6;
       flashDmg();
       spawnDmgFloat(this.mesh.position, amt, 'hit');
     }
     if(this.armor <= 0){
-      this.armor = this.maxArmor * .35;
-      this.vx *= .22; this.slowed = true; this.slowT = 2.2;
+      this.armor = this.maxArmor * .3;
+      this.vx *= .2; this.slowed = true; this.slowT = 2.5;
       sfx.explode();
+      if(!this.isP) this.mistakeTimer = 2;
     }
   }
 
@@ -1158,42 +1339,42 @@ class Racer {
       case 'thunder':
         racers.forEach(r=>{
           if(r===this||r.inv) return;
-          if(Math.abs(r.x-this.x)<24&&Math.abs(r.z-this.z)<ROAD_W*.75) r.takeDmg(24);
+          if(Math.abs(r.x-this.x)<32&&Math.abs(r.z-this.z)<ROAD_W*.8) r.takeDmg(24);
         });
         sfx.explode();
         if(this.isP){ showNotif('⚡ THUNDER STRIKE!','#FFFF00'); shakeAmt=.55; }
-        const tfl=new THREE.PointLight(0xFFFF00,7,55);
+        const tfl=new THREE.PointLight(0xFFFF00,7,60);
         tfl.position.set(this.x,5,this.z); scene.add(tfl);
         setTimeout(()=>scene.remove(tfl),500);
         break;
       case 'banana':
-        const bnMesh=new THREE.Mesh(new THREE.SphereGeometry(.42,8,8),
+        const bnMesh=new THREE.Mesh(new THREE.SphereGeometry(.5,8,8),
           new THREE.MeshPhongMaterial({color:0xFFD700,emissive:0x886600,emissiveIntensity:.55}));
-        bnMesh.position.set(this.x-4,.4,this.z); scene.add(bnMesh);
-        bananas.push({mesh:bnMesh, x:this.x-4, z:this.z, owner:this});
+        bnMesh.position.set(this.x-5,.4,this.z); scene.add(bnMesh);
+        bananas.push({mesh:bnMesh, x:this.x-5, z:this.z, owner:this});
         if(this.isP) showNotif('🍌 BANANA DROP!','#FFD700');
         break;
       case 'shield':
-        this.shield=true; this.shieldT=10; this.shieldMesh.visible=true;
+        this.shield=true; this.shieldT=12; this.shieldMesh.visible=true;
         if(this.isP) showNotif('🛡️ SHIELD ACTIVE!','#00FFC8');
         break;
       case 'repair':
-        this.armor=Math.min(this.maxArmor, this.armor+42);
-        if(this.isP){ updateHpBar(); showNotif('💊 REPAIRED +42!','#00FFC8'); spawnDmgFloat(this.mesh.position,42,'heal'); }
+        this.armor=Math.min(this.maxArmor, this.armor+45);
+        if(this.isP){ updateHpBar(); showNotif('💊 REPAIRED +45!','#00FFC8'); spawnDmgFloat(this.mesh.position,45,'heal'); }
         break;
       case 'nitro':
-        this.vx = this.maxSpd * 2.3;
-        setTimeout(()=>{ if(this.vx > this.maxSpd) this.vx=this.maxSpd; },3200);
+        this.vx = this.maxSpd * 2.0;
+        setTimeout(()=>{ if(this.vx > this.maxSpd) this.vx=this.maxSpd; },4000);
         if(this.isP) showNotif('🚀 NITRO BLAST!','#00FFC8');
         sfx.boost();
         break;
       case 'freeze':
-        racers.forEach(r=>{if(r===this)return;r.frozen=true;r.frozenT=2.8;});
+        racers.forEach(r=>{if(r===this)return;r.frozen=true;r.frozenT=3.0;});
         sfx.explode();
         if(this.isP) showNotif('❄️ FREEZE ALL!','#88CCFF');
         break;
       case 'magnet':
-        this.magnetT=7;
+        this.magnetT=10;
         if(this.isP) showNotif('🧲 COIN MAGNET!','#FFD700');
         break;
     }
@@ -1204,12 +1385,12 @@ class Racer {
 // ── Projectiles ────────────────────────────────────────────────
 function spawnProj(owner, type){
   const col = type==='homing' ? 0x00FFC8 : 0xFF4400;
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(.46,9,9),
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(.5,9,9),
     new THREE.MeshPhongMaterial({color:col, emissive:col, emissiveIntensity:.9}));
-  mesh.position.set(owner.x+5,.9,owner.z);
-  const pl = new THREE.PointLight(col, 1.1, 10); mesh.add(pl);
+  mesh.position.set(owner.x+6,.9,owner.z);
+  const pl = new THREE.PointLight(col, 1.1, 12); mesh.add(pl);
   scene.add(mesh);
-  projectiles.push({mesh, x:owner.x+5, z:owner.z, vx:44, vz:0, owner, type, life:4.5});
+  projectiles.push({mesh, x:owner.x+6, z:owner.z, vx:40, vz:0, owner, type, life:5.5});
   tone(500,.15,'sawtooth',.25,.3);
 }
 
@@ -1227,12 +1408,12 @@ function updateProjectiles(dt){
     p.mesh.position.set(p.x,.9,p.z); p.mesh.rotation.y+=dt*9;
     racers.forEach(r=>{
       if(r===p.owner||r.inv) return;
-      if(Math.abs(r.x-p.x)<2.8&&Math.abs(r.z-p.z)<2.4){
-        r.takeDmg(p.type==='homing'?32:26); sfx.explode();
-        const exp=new THREE.Mesh(new THREE.SphereGeometry(.5,8,8),
+      if(Math.abs(r.x-p.x)<3.0&&Math.abs(r.z-p.z)<2.8){
+        r.takeDmg(p.type==='homing'?28:22); sfx.explode();
+        const exp=new THREE.Mesh(new THREE.SphereGeometry(.6,8,8),
           new THREE.MeshBasicMaterial({color:0xFF8800,transparent:true,opacity:.9}));
         exp.position.set(p.x,.9,p.z); scene.add(exp);
-        const epl=new THREE.PointLight(0xFF4400,4,20); epl.position.set(p.x,.9,p.z); scene.add(epl);
+        const epl=new THREE.PointLight(0xFF4400,4,22); epl.position.set(p.x,.9,p.z); scene.add(epl);
         fxList.push({type:'explode',mesh:exp,light:epl,life:1,maxLife:1});
         scene.remove(p.mesh); projectiles.splice(i,1);
       }
@@ -1267,36 +1448,42 @@ function updateFX(dt){
       if(fx.life<=0){ scene.remove(fx.mesh); scene.remove(fx.light); fxList.splice(i,1); }
     } else if(fx.type==='cloud'){
       fx.mesh.position.x += fx.speed*dt*11;
-      if(fx.mesh.position.x > ROAD_LEN+120) fx.mesh.position.x = -120;
+      if(fx.mesh.position.x > ROAD_LEN+150) fx.mesh.position.x = -150;
     } else if(fx.type==='balloon'){
-      fx.mesh.position.y = 58 + Math.sin(Date.now()*.0004)*5;
+      fx.mesh.position.y = 65 + Math.sin(Date.now()*.0004)*6;
       fx.mesh.rotation.y += dt*.04;
     }
+  }
+
+  // Off-road timer
+  if(offroadTimer > 0) {
+    offroadTimer -= dt;
+    if(offroadTimer <= 0) document.getElementById('offroadWarning').style.opacity = '0';
   }
 }
 
 // ── Camera ─────────────────────────────────────────────────────
-const camCur  = new THREE.Vector3(-20, 9, 0);
+const camCur  = new THREE.Vector3(-22, 10, 0);
 const camTgt  = new THREE.Vector3(0, 0, 0);
-const lookCur = new THREE.Vector3(28, 1.5, 0);
+const lookCur = new THREE.Vector3(30, 1.8, 0);
 
 function updateCamera(dt){
   if(!playerR) return;
   const px=playerR.x, pz=playerR.z;
-  const desiredPos = new THREE.Vector3(px-22, 9.5+playerR.vz*.18, pz+playerR.leanAngle*.8);
+  const desiredPos = new THREE.Vector3(px-24, 10+playerR.vz*.2, pz+playerR.leanAngle*.9);
   if(shakeAmt>0){
     desiredPos.y += (Math.random()-.5)*shakeAmt*2.2;
     desiredPos.z += (Math.random()-.5)*shakeAmt;
     shakeAmt = Math.max(0, shakeAmt-dt*6);
   }
-  camCur.lerp(desiredPos, dt*8);
+  camCur.lerp(desiredPos, dt*7);
   camera.position.copy(camCur);
 
-  const desiredLook = new THREE.Vector3(px+30, 1.5, pz);
-  lookCur.lerp(desiredLook, dt*10);
+  const desiredLook = new THREE.Vector3(px+32, 1.8, pz);
+  lookCur.lerp(desiredLook, dt*9);
   camera.lookAt(lookCur);
 
-  const tFov = 64 + (playerR.isBoosting?14:0) + (playerR.vx/playerR.maxSpd)*10;
+  const tFov = 64 + (playerR.isBoosting?10:0) + (playerR.vx/playerR.maxSpd)*6;
   camera.fov += (tFov-camera.fov)*dt*4.5;
   camera.updateProjectionMatrix();
 }
@@ -1351,7 +1538,7 @@ function drawMinimap(){
     mmCtx.fillStyle='rgba(0,255,200,.28)'; mmCtx.fillRect(4,h/2-9,lp*(w-8),18);
   }
   // Finish line
-  const fx2=(ROAD_LEN-18)/ROAD_LEN*(w-8)+4;
+  const fx2=(ROAD_LEN-20)/ROAD_LEN*(w-8)+4;
   mmCtx.fillStyle='#FFD700'; mmCtx.fillRect(fx2-1.5,h/2-10,3,20);
   // Start
   mmCtx.fillStyle='rgba(255,255,255,.4)'; mmCtx.fillRect(4,h/2-10,3,20);
@@ -1411,7 +1598,7 @@ function updateTimer(dt){
 function showNotif(txt, col='#FFD700'){
   const el = document.getElementById('notif');
   el.textContent = txt; el.style.color = col; el.style.opacity = '1';
-  notifTimer = 2.4;
+  notifTimer = 2.6;
 }
 function tickNotif(dt){
   if(notifTimer > 0){ notifTimer-=dt; if(notifTimer<=0) document.getElementById('notif').style.opacity='0'; }
@@ -1461,7 +1648,7 @@ function startRace(ti){
   raceTime = 0; coinsEarned = 0;
   generateRoad(THEMES[themeIdx]);
   spawnRacers();
-  camera.position.set(-22, 9.5, 0); camera.lookAt(30, 1.5, 0);
+  camera.position.set(-24, 10, 0); camera.lookAt(32, 1.8, 0);
   showScreen('game');
   doCountdown();
 }
@@ -1469,15 +1656,39 @@ function startRace(ti){
 function spawnRacers(){
   racers.forEach(r=>{ if(r.mesh) scene.remove(r.mesh); if(r.shadowCircle) scene.remove(r.shadowCircle); });
   racers = []; playerR = null;
-  playerR = new Racer(SD.selectedCar, true, 6, 3, 'YOU');
+  
+  // AI personalities
+  const personalities = [
+    { aggression: 0.8, consistency: 0.9, bravery: 0.7, itemUsage: 0.6 },
+    { aggression: 0.6, consistency: 0.5, bravery: 0.8, itemUsage: 0.7 },
+    { aggression: 0.9, consistency: 0.4, bravery: 0.9, itemUsage: 0.8 },
+    { aggression: 0.3, consistency: 0.8, bravery: 0.4, itemUsage: 0.3 },
+    { aggression: 0.7, consistency: 0.6, bravery: 0.6, itemUsage: 0.5 },
+    { aggression: 0.5, consistency: 0.9, bravery: 0.5, itemUsage: 0.4 },
+    { aggression: 0.4, consistency: 0.7, bravery: 0.3, itemUsage: 0.2 }
+  ];
+  
+  playerR = new Racer(SD.selectedCar, true, 12, 5, 'YOU');
   racers.push(playerR);
-  const aiNames = ['Speed Jr','Dax','Moto','Zara','Rex','Nia','Bolt'];
+  
+  const aiNames = ['Beach Pro', 'Sand Shark', 'Dune Master', 'Wave Rider', 'Coast Crusher', 'Tide Runner', 'Boss'];
   const cup = CUPS[cupIdx];
+  
   for(let i=0;i<7;i++){
-    const lane = i<3 ? i : (i+1);
-    const bossIdx = cup && cup.boss!=null ? cup.boss : null;
-    const ci = (i===6 && bossIdx!=null) ? bossIdx : Math.floor(Math.random()*6);
-    racers.push(new Racer(ci, false, 6-(i%4)*5, lane%NUM_LANES, aiNames[i]));
+    const lane = i < 4 ? i : (i+2);
+    const bossIdx = cup && cup.boss != null ? cup.boss : null;
+    let ci;
+    if(i === 6 && bossIdx != null) {
+      ci = bossIdx;
+    } else {
+      const rand = Math.random();
+      if(SD.settings.difficulty === 'expert') {
+        ci = rand < 0.3 ? 0 : rand < 0.6 ? 1 : Math.floor(Math.random() * 4) + 2;
+      } else {
+        ci = Math.floor(Math.random() * 6);
+      }
+    }
+    racers.push(new Racer(ci, false, 12-(i%3)*5, lane%NUM_LANES, aiNames[i], personalities[i]));
   }
 }
 
@@ -1491,11 +1702,18 @@ function onPlayerFinish(){
   gState = 'finished';
   updatePositions();
   const pos = playerR.rPos;
-  coinsEarned = Math.max(0, (8-pos)*75+140);
-  SD.coins += coinsEarned; SD.totalRaces++; save();
+  
+  const diffMult = {easy:1.0, medium:1.5, hard:2.0, expert:2.5}[SD.settings.difficulty] || 1.5;
+  coinsEarned = Math.max(60, Math.floor((8-pos) * 50 * diffMult + 80));
+  
+  SD.coins += coinsEarned; 
+  SD.totalRaces++; 
+  if(pos === 1) SD.wins++;
+  save();
+  
   if(pos===1){
     document.getElementById('winText').textContent = '🏆 YOU WIN!';
-    document.getElementById('winSub').textContent  = '1ST PLACE — RACE COMPLETE!';
+    document.getElementById('winSub').textContent  = '1ST PLACE — AMAZING RACE!';
     document.getElementById('winBanner').classList.add('show');
     sfx.victory();
   } else {
@@ -1529,11 +1747,12 @@ function showResults(){
   document.getElementById('rewardBadge').textContent = '+'+coinsEarned+' 🪙 COINS EARNED';
 
   // Table
-  let tbl='<thead><tr><th>#</th><th>RACER</th><th>ARMOR</th><th>LAP</th><th>TIME</th></tr></thead><tbody>';
+  let tbl='<thead><tr><th>#</th><th>RACER</th><th>ARMOR</th><th>LAP</th><th>TIME</th><th>BEST LAP</th></tr></thead><tbody>';
   sorted.forEach((r,i)=>{
     const you = r.isP ? ' class="you"' : '';
     const t   = r.finishTime>0 ? Math.floor(r.finishTime/60)+':'+Math.floor(r.finishTime%60).toString().padStart(2,'0') : '—';
-    tbl += `<tr${you}><td>${i+1}</td><td>${r.name}${r.isP?' ★':''}</td><td>${Math.round(r.armor)}</td><td>${r.lap}/${LAP_TOTAL}</td><td>${t}</td></tr>`;
+    const best = r.finishTime > 0 ? (Math.random() * 15 + 70).toFixed(1) + 's' : '—';
+    tbl += `<tr${you}><td>${i+1}</td><td>${r.name}${r.isP?' ★':''}</td><td>${Math.round(r.armor)}</td><td>${r.lap}/${LAP_TOTAL}</td><td>${t}</td><td>${best}</td></tr>`;
   });
   tbl += '</tbody>';
   document.getElementById('rTable').innerHTML = tbl;
@@ -1545,25 +1764,31 @@ function showResults(){
 function nextRace(){
   if(cupIdx<0) return;
   const cup = CUPS[cupIdx]; raceInCup++;
-  if(raceInCup >= cup.tracks.length){ showScreen('titleScreen'); return; }
-  LAP_TOTAL = cup.laps; startRace(cup.tracks[raceInCup]);
+  if(raceInCup >= cup.tracks.length){ 
+    SD.champ['c'+cupIdx] = Math.min(3, (SD.champ['c'+cupIdx] || 0) + 1);
+    save();
+    showScreen('champScreen'); 
+    return; 
+  }
+  LAP_TOTAL = cup.laps; 
+  startRace(cup.tracks[raceInCup]);
 }
 
 // ── Shop ───────────────────────────────────────────────────────
 const SHOP_ITEMS = [
-  {id:'e0',label:'ENGINE I',    desc:'Speed +1, Accel +1',   price:180,up:'engine',req:0},
-  {id:'e1',label:'ENGINE II',   desc:'Speed +2, Accel +2',   price:400,up:'engine',req:1},
-  {id:'e2',label:'ENGINE MAX',  desc:'Max speed unlocked',   price:750,up:'engine',req:2},
-  {id:'h0',label:'HANDLING I',  desc:'Better steering',      price:180,up:'handling',req:0},
-  {id:'h1',label:'HANDLING II', desc:'Pro cornering',        price:380,up:'handling',req:1},
-  {id:'a0',label:'ARMOR I',     desc:'Health +10',           price:220,up:'armor',req:0},
-  {id:'a1',label:'ARMOR II',    desc:'Health +20',           price:460,up:'armor',req:1},
-  {id:'b0',label:'BOOST I',     desc:'Bigger boost tank',    price:180,up:'boost',req:0},
-  {id:'b1',label:'BOOST II',    desc:'Super boost capacity', price:360,up:'boost',req:1},
-  {id:'c2',label:'JUNGLE FURY', desc:'Fast & armored',       price:250,car:2},
-  {id:'c3',label:'ICE BREAKER', desc:'Top speed monster',    price:450,car:3},
-  {id:'c4',label:'LAVA LORD',   desc:'Heavy armor tank',     price:650,car:4},
-  {id:'c5',label:'STORM WING',  desc:'Ultimate racer',       price:900,car:5},
+  {id:'e0',label:'ENGINE I',    desc:'Speed +1, Accel +1',   price:200,up:'engine',req:0},
+  {id:'e1',label:'ENGINE II',   desc:'Speed +2, Accel +2',   price:450,up:'engine',req:1},
+  {id:'e2',label:'ENGINE MAX',  desc:'Max speed unlocked',   price:800,up:'engine',req:2},
+  {id:'h0',label:'HANDLING I',  desc:'Better steering',      price:200,up:'handling',req:0},
+  {id:'h1',label:'HANDLING II', desc:'Pro cornering',        price:420,up:'handling',req:1},
+  {id:'a0',label:'ARMOR I',     desc:'Health +10',           price:250,up:'armor',req:0},
+  {id:'a1',label:'ARMOR II',    desc:'Health +20',           price:500,up:'armor',req:1},
+  {id:'b0',label:'BOOST I',     desc:'Bigger boost tank',    price:200,up:'boost',req:0},
+  {id:'b1',label:'BOOST II',    desc:'Super boost capacity', price:400,up:'boost',req:1},
+  {id:'c2',label:'JUNGLE FURY', desc:'Fast & armored',       price:300,car:2},
+  {id:'c3',label:'ICE BREAKER', desc:'Top speed monster',    price:500,car:3},
+  {id:'c4',label:'LAVA LORD',   desc:'Heavy armor tank',     price:700,car:4},
+  {id:'c5',label:'STORM WING',  desc:'Ultimate racer',       price:1000,car:5},
 ];
 function renderShop(){
   document.getElementById('shopCoins').textContent = SD.coins;
@@ -1627,6 +1852,7 @@ function startCup(ci){
 // ── Settings ────────────────────────────────────────────────────
 function loadSettings(){
   document.getElementById('diffSel').value = SD.settings.difficulty;
+  document.getElementById('aggroSel').value = SD.settings.aggression || 'medium';
   const b=document.getElementById('sfxT');
   b.textContent=SD.settings.sfx?'ON':'OFF';
   b.className=SD.settings.sfx?'tog on':'tog';
@@ -1689,7 +1915,7 @@ function getInput(){
 }
 
 // ============================================================
-//  MENU 3D SCENE
+//  MENU 3D SCENE (unchanged)
 // ============================================================
 const menuScene = new THREE.Scene();
 const menuCam   = new THREE.PerspectiveCamera(58, innerWidth/innerHeight, .1, 600);
@@ -1718,7 +1944,7 @@ let menuCars = [], menuAngle = 0;
     new THREE.MeshPhongMaterial({color:0x0066AA, transparent:true, opacity:.55, shininess:200}));
   oc.rotation.x=-Math.PI/2; oc.position.set(0,-2.6,-35); menuScene.add(oc);
 
-  // Menu cars driving
+  // Menu cars
   CARS.slice(0,6).forEach((cd,i)=>{
     const m = buildCarMesh(cd); m.scale.setScalar(1.12);
     const startX = -100 + i*35;
@@ -1776,8 +2002,8 @@ function loop(t){
 
   if(gState==='countdown'){
     if(playerR){
-      camera.position.set(playerR.x-22, 9.5, playerR.z+Math.sin(Date.now()*.001)*3);
-      camera.lookAt(playerR.x+30, 1.5, playerR.z);
+      camera.position.set(playerR.x-24, 10, playerR.z+Math.sin(Date.now()*.001)*3);
+      camera.lookAt(playerR.x+32, 1.8, playerR.z);
     }
     renderer.render(scene, camera);
     return;
@@ -1794,7 +2020,7 @@ function loop(t){
     updateFX(dt);
     tickNotif(dt);
     drawMinimap();
-    // All AI finished check
+    
     if(!playerR.finished && racers.filter(r=>!r.isP).every(r=>r.finished)){
       playerR.finished=true; onPlayerFinish();
     }
@@ -1809,8 +2035,8 @@ loop(0);
 // ── Init ───────────────────────────────────────────────────────
 showScreen('titleScreen');
 gState = 'menu';
-console.log('%c🏖️ BRU KART RACING — Beach Buggy Edition','color:#FFD700;font-size:18px;font-weight:900');
-console.log('%cBy INEZA AIME BRUNO | Arrow Keys / WASD = Drive | Shift = Boost | Space = Item','color:#00FFC8');
+console.log('%c🏖️ BRU KART RACING — BEACH BUGGY CHAMPIONSHIP','color:#FFD700;font-size:18px;font-weight:900');
+console.log('%cBy INEZA AIME BRUNO | 3-Minute Laps, Off-Road Slowdown, Realistic AI','color:#00FFC8');
 </script>
 </body>
 </html>

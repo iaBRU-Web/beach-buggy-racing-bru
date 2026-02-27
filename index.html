@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BRU KART RACING – BEACH BUGGY CHAMPIONSHIP</title>
+<title>BRU KART RACING – BEACH BUGGY DRIFT</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -30,6 +30,10 @@
   <div id="lapFlash"></div>
   <div id="slipstream"></div>
   <div id="offroadWarning">OFF-ROAD</div>
+  <div id="driftIndicator">
+    <div id="driftBar"></div>
+    <div id="driftText">DRIFT</div>
+  </div>
 </div>
 
 <!-- WIN BANNER -->
@@ -45,7 +49,7 @@
   <div id="ts-waves"><div class="wave w1"></div><div class="wave w2"></div><div class="wave w3"></div></div>
   <div id="ts-palms"><span class="tpalm">🌴</span><span class="tpalm">🌴</span></div>
   <div id="logo">BRU KART RACING</div>
-  <div id="logo-sub">BEACH BUGGY CHAMPIONSHIP</div>
+  <div id="logo-sub">BEACH BUGGY DRIFT</div>
   <div id="logo-tag">BY INEZA AIME BRUNO</div>
   <button class="mbtn mbtn-gold" onclick="startQuickRace()">🏁 QUICK RACE</button>
   <button class="mbtn mbtn-gold" onclick="showScreen('champScreen')">🏆 CHAMPIONSHIP</button>
@@ -87,6 +91,9 @@
   <div class="sr"><label>AI AGGRESSION</label><select id="aggroSel" onchange="saveSetting('aggression',this.value)">
     <option value="low">LOW</option><option value="medium" selected>MEDIUM</option><option value="high">HIGH</option>
   </select></div>
+  <div class="sr"><label>DRIFT ASSIST</label><select id="driftAssistSel" onchange="saveSetting('driftAssist',this.value)">
+    <option value="off">OFF</option><option value="light" selected>LIGHT</option><option value="full">FULL</option>
+  </select></div>
   <div class="sr"><label>RESET PROGRESS</label><button class="mbtn mbtn-red" style="margin:0;padding:7px 20px;min-width:0;font-size:11px" onclick="resetProgress()">RESET</button></div>
   <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
 </div>
@@ -124,10 +131,11 @@
     <button class="ab ab-item" onclick="useItem()">🎯 USE ITEM</button>
   </div>
 </div>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --gold:#FFD700;--neon:#00FFC8;--red:#FF2244;--blue:#00AAFF;
+  --gold:#FFD700;--neon:#00FFC8;--red:#FF2244;--blue:#00AAFF;--drift:#FF8800;
   --panel:rgba(0,10,25,0.92);--r:14px;
 }
 body{background:#000;font-family:'Rajdhani',sans-serif;overflow:hidden;color:#fff;user-select:none}
@@ -257,6 +265,22 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 #damageFlash{position:absolute;inset:0;pointer-events:none;background:rgba(255,30,50,.18);opacity:0;transition:opacity .05s}
 #slipstream{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:120px;height:30px;border:2px solid rgba(0,255,200,.3);border-radius:20px;opacity:0;transition:opacity .15s}
 #offroadWarning{position:absolute;top:40%;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:18px;color:#FF2244;text-shadow:0 0 10px #FF2244;opacity:0;transition:opacity .2s;pointer-events:none;letter-spacing:4px}
+/* Drift Indicator */
+#driftIndicator{
+  position:absolute;bottom:140px;left:50%;transform:translateX(-50%);
+  width:160px;height:40px;background:rgba(0,0,0,.5);border-radius:20px;
+  border:2px solid rgba(255,136,0,.5);overflow:hidden;opacity:0;
+  transition:opacity .2s;display:flex;align-items:center;
+}
+#driftBar{
+  height:100%;width:0%;background:linear-gradient(90deg,#FF8800,#FFD700);
+  transition:width .1s;
+}
+#driftText{
+  position:absolute;width:100%;text-align:center;color:#fff;
+  font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:2px;text-shadow:0 0 10px #FF8800;pointer-events:none;
+}
 /* WIN Banner */
 #winBanner{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.8);z-index:200;opacity:0;pointer-events:none;transition:opacity .6s;flex-direction:column}
 #winBanner.show{opacity:1;pointer-events:auto}
@@ -335,7 +359,7 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ============================================================
-//  BRU KART RACING — BEACH BUGGY CHAMPIONSHIP
+//  BRU KART RACING — BEACH BUGGY DRIFT
 //  by INEZA AIME BRUNO
 // ============================================================
 
@@ -343,13 +367,13 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 const td = {f:false, b:false, l:false, r:false, boost:false};
 
 // ── Save / Load ───────────────────────────────────────────────
-const SK = 'brukart_v7_beachbuggy';
+const SK = 'brukart_v8_drift';
 let SD = {
-  coins: 400,
+  coins: 500,
   selectedCar: 0,
   unlockedCars: [0, 1],
   upgrades: {engine:0, handling:0, armor:0, boost:0},
-  settings: {sfx:true, difficulty:'medium', aggression:'medium'},
+  settings: {sfx:true, difficulty:'medium', aggression:'medium', driftAssist:'light'},
   champ: {c0:0, c1:0, c2:0, c3:0},
   totalRaces: 0,
   wins: 0
@@ -383,6 +407,7 @@ function tone(freq, dur=.12, type='square', vol=.18, sweep=.5){
 }
 const sfx = {
   boost:   ()=>tone(320,.2,'sawtooth',.28,1.6),
+  drift:   ()=>{ if(Math.random()<.3) tone(280,.05,'sawtooth',.15,1.2); }, // Drift sound
   pickup:  ()=>{ tone(700,.1,'sine',.22,1.8); setTimeout(()=>tone(1100,.1,'sine',.22,1.8),100); },
   hit:     ()=>tone(160,.3,'sawtooth',.4,.25),
   explode: ()=>tone(80,.4,'sawtooth',.45,.2),
@@ -392,16 +417,16 @@ const sfx = {
   engine:  (spd,max)=>{ if(!SD.settings.sfx||!actx) return; }
 };
 
-// ── Car Definitions ────────────────────────────────────────────
+// ── Car Definitions (with drift stats) ─────────────────────────
 const CARS = [
-  {name:'Dune Rider',  col:0xFF6600,col2:0x883300,spd:6, acc:7, hdl:7, arm:6, bst:6},
-  {name:'Ocean Blaze', col:0x0099FF,col2:0x003388,spd:7, acc:6, hdl:8, arm:5, bst:7},
-  {name:'Jungle Fury', col:0x22CC44,col2:0x115522,spd:6, acc:8, hdl:7, arm:7, bst:7, cost:250},
-  {name:'Ice Breaker', col:0x88EEFF,col2:0x3399BB,spd:8, acc:5, hdl:6, arm:6, bst:8, cost:450},
-  {name:'Lava Lord',   col:0xFF2200,col2:0x770000,spd:7, acc:7, hdl:5, arm:9, bst:6, cost:650},
-  {name:'Storm Wing',  col:0xBB00FF,col2:0x660088,spd:9, acc:6, hdl:8, arm:4, bst:9, cost:900},
-  {name:'Desert Titan',col:0xDDAA00,col2:0x885500,spd:8, acc:7, hdl:6, arm:9, bst:7, boss:true},
-  {name:'BRU',         col:0xFFD700,col2:0x997700,spd:10,acc:9, hdl:9, arm:11,bst:10,boss:true,final:true}
+  {name:'Dune Rider',  col:0xFF6600,col2:0x883300,spd:6, acc:7, hdl:7, arm:6, bst:6, drift:7},
+  {name:'Ocean Blaze', col:0x0099FF,col2:0x003388,spd:7, acc:6, hdl:8, arm:5, bst:7, drift:6},
+  {name:'Jungle Fury', col:0x22CC44,col2:0x115522,spd:6, acc:8, hdl:7, arm:7, bst:7, drift:8, cost:250},
+  {name:'Ice Breaker', col:0x88EEFF,col2:0x3399BB,spd:8, acc:5, hdl:6, arm:6, bst:8, drift:5, cost:450},
+  {name:'Lava Lord',   col:0xFF2200,col2:0x770000,spd:7, acc:7, hdl:5, arm:9, bst:6, drift:9, cost:650},
+  {name:'Storm Wing',  col:0xBB00FF,col2:0x660088,spd:9, acc:6, hdl:8, arm:4, bst:9, drift:7, cost:900},
+  {name:'Desert Titan',col:0xDDAA00,col2:0x885500,spd:8, acc:7, hdl:6, arm:9, bst:7, drift:8, boss:true},
+  {name:'BRU',         col:0xFFD700,col2:0x997700,spd:10,acc:9, hdl:9, arm:11,bst:10,drift:10,boss:true,final:true}
 ];
 
 // ── Power-up types ─────────────────────────────────────────────
@@ -434,13 +459,13 @@ const THEMES = [
 ];
 
 // ── Constants ──────────────────────────────────────────────────
-const ROAD_LEN   = 9500;  // Long enough for 3-minute laps at ~25-30 m/s
-const ROAD_W     = 64;     // Wider road for beach buggy feel
+const ROAD_LEN   = 5400;  // 3-minute laps at ~30 m/s
+const ROAD_W     = 64;     // Wide road for drifting
 const NUM_LANES  = 10;
 const LANE_W     = ROAD_W / NUM_LANES;
 let LAP_TOTAL    = 3;
 
-// Road boundaries for off-road check
+// Road boundaries
 const ROAD_LEFT  = -ROAD_W/2 + 1.6;
 const ROAD_RIGHT = ROAD_W/2 - 1.6;
 
@@ -472,7 +497,13 @@ let pickups  = [], boostPads = [], bananas = [], projectiles = [], fxList = [];
 let shakeAmt = 0, notifTimer = 0;
 let paused   = false;
 let slipstreamActive = false;
-let offroadTimer = 0; // For off-road warning
+let offroadTimer = 0;
+
+// Drift state
+let driftActive = false;
+let driftAngle = 0;
+let driftCharge = 0;
+const MAX_DRIFT_CHARGE = 100;
 
 // ============================================================
 //  CAR MESH BUILDER (unchanged)
@@ -572,17 +603,15 @@ function buildCarMesh(def){
 }
 
 // ============================================================
-//  ROAD & SCENERY GENERATOR (modified for longer track)
+//  ROAD & SCENERY GENERATOR (unchanged from last version)
 // ============================================================
 function generateRoad(T){
-  // Clear scene
   while(scene.children.length > 0) scene.remove(scene.children[0]);
   pickups=[]; boostPads=[]; bananas=[]; projectiles=[]; fxList=[];
 
   scene.background = new THREE.Color(T.sky);
-  scene.fog = new THREE.FogExp2(T.fog, .0018); // Reduced fog density for longer view
+  scene.fog = new THREE.FogExp2(T.fog, .0022);
 
-  // Lighting
   const ambient = new THREE.AmbientLight(0xFFFFFF, .55);
   scene.add(ambient);
 
@@ -606,7 +635,7 @@ function generateRoad(T){
     });
   }
 
-  // ── GROUND ────────────────────────────────────────────────
+  // Ground
   const gMat = new THREE.MeshPhongMaterial({color:T.ground, shininess:4});
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_LEN+800, 500), gMat);
   ground.rotation.x = -Math.PI/2;
@@ -614,7 +643,7 @@ function generateRoad(T){
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // ── ROAD SURFACE ──────────────────────────────────────────
+  // Road surface
   const roadMat = new THREE.MeshPhongMaterial({color:T.road, shininess:28, specular:0x222222});
   const road = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_LEN, ROAD_W), roadMat);
   road.rotation.x = -Math.PI/2;
@@ -622,12 +651,12 @@ function generateRoad(T){
   road.receiveShadow = true;
   scene.add(road);
 
-  // ── LANE MARKERS ──────────────────────────────────────────
+  // Lane markers
   const dashMat = new THREE.MeshPhongMaterial({color:0xFFFFFF, emissive:0xFFFFFF, emissiveIntensity:.1});
-  const dashLen = ROAD_LEN / 80; // More dashes
+  const dashLen = ROAD_LEN / 70;
   for(let lane=1; lane<NUM_LANES; lane++){
     const lz = (lane/NUM_LANES)*ROAD_W - ROAD_W/2;
-    for(let seg=0; seg<80; seg++){
+    for(let seg=0; seg<70; seg++){
       const lx = seg * dashLen + dashLen/2;
       const dash = new THREE.Mesh(new THREE.PlaneGeometry(dashLen*.5,.18), dashMat);
       dash.rotation.x = -Math.PI/2;
@@ -636,7 +665,7 @@ function generateRoad(T){
     }
   }
 
-  // ── ROAD EDGE LINES ────────────────────────────────────────
+  // Edge lines
   const edgeMat = new THREE.MeshPhongMaterial({color:0xFFFFFF, emissive:0xFFFFFF, emissiveIntensity:.2});
   [-1,1].forEach(side => {
     const edge = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_LEN,.55), edgeMat);
@@ -645,8 +674,8 @@ function generateRoad(T){
     scene.add(edge);
   });
 
-  // ── KERB STRIPS ────────────────────────────────────────────
-  const numKerb = 85;
+  // Kerb strips
+  const numKerb = 75;
   const kerbLen = ROAD_LEN / numKerb;
   for(let i=0; i<numKerb; i++){
     const kx = i * kerbLen + kerbLen/2;
@@ -658,14 +687,13 @@ function generateRoad(T){
     });
   }
 
-  // ── BARRIERS ──────────────────────────────────────────────
+  // Barriers
   const barrMat = new THREE.MeshPhongMaterial({color:0xCCCCCC, shininess:25});
   [-1,1].forEach(side => {
     const bar = new THREE.Mesh(new THREE.BoxGeometry(ROAD_LEN,.95,.72), barrMat);
     bar.position.set(ROAD_LEN/2, .48, side*(ROAD_W/2+1.85));
     bar.castShadow = true; bar.receiveShadow = true;
     scene.add(bar);
-    // Colored segments
     const segW = 8;
     for(let i=0; i<Math.floor(ROAD_LEN/segW); i++){
       const sMat = new THREE.MeshPhongMaterial({color: i%2===0 ? 0xFF4400 : 0xFFFFFF});
@@ -675,7 +703,7 @@ function generateRoad(T){
     }
   });
 
-  // ── BOOST PADS (strategic placement) ────────────────────────
+  // Boost pads
   for(let bx=350; bx<ROAD_LEN-300; bx+=320){
     const lz = (Math.floor(Math.random()*NUM_LANES)+.5)*LANE_W - ROAD_W/2;
     const padMat = new THREE.MeshPhongMaterial({color:0x00FFC8, emissive:0x00AA88, emissiveIntensity:.85, transparent:true, opacity:.88});
@@ -684,7 +712,6 @@ function generateRoad(T){
     scene.add(pad);
     const pl = new THREE.PointLight(0x00FFC8, .5, 9);
     pl.position.set(bx, 1, lz); scene.add(pl);
-    // Arrow chevrons
     for(let a=0;a<2;a++){
       const arr = new THREE.Mesh(new THREE.PlaneGeometry(LANE_W*.4,1.4),
         new THREE.MeshPhongMaterial({color:0xFFFFFF, transparent:true, opacity:.55}));
@@ -694,7 +721,7 @@ function generateRoad(T){
     boostPads.push({x:bx, z:lz, mesh:pad, light:pl});
   }
 
-  // ── PICKUP BOXES ──────────────────────────────────────────
+  // Pickup boxes
   for(let px=250; px<ROAD_LEN-250; px+=160){
     const lz = (Math.floor(Math.random()*NUM_LANES)+.5)*LANE_W - ROAD_W/2;
     const boxG = new THREE.Group();
@@ -708,36 +735,31 @@ function generateRoad(T){
     boxG.add(bpl);
     boxG.position.set(px, 1.75, lz);
     scene.add(boxG);
-    pickups.push({mesh:boxG, x:px, z:lz, active:true, respawnT:15}); // Slower respawn
+    pickups.push({mesh:boxG, x:px, z:lz, active:true, respawnT:15});
   }
 
-  // ── FINISH LINE & ARCH ────────────────────────────────────
   buildFinishLine();
 
-  // ── START LINE ────────────────────────────────────────────
+  // Start line
   const slMat = new THREE.MeshPhongMaterial({color:0xFFFFFF, emissive:0xFFFFFF, emissiveIntensity:.18});
   const sl = new THREE.Mesh(new THREE.PlaneGeometry(4.2, ROAD_W), slMat);
-  sl.rotation.x = -Math.PI/2; sl.position.set(10, .05, 0); scene.add(sl);
-  // Checker on start
+  sl.rotation.x = -Math.PI/2; sl.position.set(12, .05, 0); scene.add(sl);
   for(let c=0;c<10;c++) for(let r=0;r<2;r++) if((c+r)%2===0){
     const sq = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W/10,2.0),
       new THREE.MeshPhongMaterial({color:0x000000}));
     sq.rotation.x = -Math.PI/2;
-    sq.position.set(10, .06, (c/10)*ROAD_W - ROAD_W/2 + ROAD_W/20);
+    sq.position.set(12, .06, (c/10)*ROAD_W - ROAD_W/2 + ROAD_W/20);
     scene.add(sq);
   }
 
-  // ── SIDE SCENERY ──────────────────────────────────────────
   buildSideScenery(T);
 }
 
 function buildFinishLine(){
   const fx = ROAD_LEN - 20;
-  // White base
   const fl = new THREE.Mesh(new THREE.PlaneGeometry(4.5, ROAD_W),
     new THREE.MeshPhongMaterial({color:0xFFFFFF, emissive:0xFFFFFF, emissiveIntensity:.22}));
   fl.rotation.x = -Math.PI/2; fl.position.set(fx, .05, 0); scene.add(fl);
-  // Checker
   for(let c=0;c<10;c++) for(let r=0;r<2;r++) if((c+r)%2===0){
     const sq = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W/10,2.1),
       new THREE.MeshPhongMaterial({color:0x000000}));
@@ -745,18 +767,15 @@ function buildFinishLine(){
     sq.position.set(fx, .06, (c/10)*ROAD_W - ROAD_W/2 + ROAD_W/20);
     scene.add(sq);
   }
-  // Arch pillars
   const archMat = new THREE.MeshPhongMaterial({color:0xFF2244, emissive:0x880011, emissiveIntensity:.35});
   const pL = new THREE.Mesh(new THREE.BoxGeometry(.8,18,.8), archMat);
   pL.position.set(fx, 9, -ROAD_W/2-1.5); scene.add(pL);
   const pR = pL.clone(); pR.position.set(fx, 9, ROAD_W/2+1.5); scene.add(pR);
   const arch = new THREE.Mesh(new THREE.BoxGeometry(.8,1, ROAD_W+3), archMat);
   arch.position.set(fx, 18, 0); scene.add(arch);
-  // Banner
   const bn = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W,3.2),
     new THREE.MeshPhongMaterial({color:0xFFD700, emissive:0x886600, emissiveIntensity:.65, side:THREE.DoubleSide}));
   bn.rotation.y = Math.PI/2; bn.position.set(fx, 17, 0); scene.add(bn);
-  // Arch lights
   const al1 = new THREE.PointLight(0xFF2244, 2.5, 30); al1.position.set(fx,15,-ROAD_W/2); scene.add(al1);
   const al2 = new THREE.PointLight(0xFF2244, 2.5, 30); al2.position.set(fx,15, ROAD_W/2); scene.add(al2);
   const al3 = new THREE.PointLight(0xFFD700, 3.0, 40); al3.position.set(fx,18, 0); scene.add(al3);
@@ -778,7 +797,6 @@ function buildSideScenery(T){
     });
   }
 
-  // Crowd spectators
   const crowdCols = [0xFF6688,0xFFAA44,0x44CCFF,0xAA44FF,0x44FF88,0xFF8844,0x88FFAA];
   for(let x=100; x<ROAD_LEN-100; x+=38){
     [-(ROAD_W/2+18), ROAD_W/2+18].forEach(z => {
@@ -789,7 +807,6 @@ function buildSideScenery(T){
       const head = new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),
         new THREE.MeshPhongMaterial({color:0xFFD0A0}));
       head.position.y = 1.75; cg.add(head);
-      // Wave arm
       const arm = new THREE.Mesh(new THREE.BoxGeometry(.14,.65,.14),
         new THREE.MeshPhongMaterial({color:0xFFD0A0}));
       arm.position.set(.45, 1.6+Math.random()*.4, 0);
@@ -800,14 +817,11 @@ function buildSideScenery(T){
     });
   }
 
-  // Beach-specific extras
   if(T.side === 'beach'){
-    // Ocean plane
     const oceanMat = new THREE.MeshPhongMaterial({color:0x0088BB, transparent:true, opacity:.72, shininess:200, specular:0x88CCFF});
     const ocean = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_LEN+400, 120), oceanMat);
     ocean.rotation.x = -Math.PI/2; ocean.position.set(ROAD_LEN/2, -.5, -(ROAD_W/2+80));
     scene.add(ocean);
-    // Clouds
     for(let i=0;i<25;i++){
       const cg = new THREE.Group();
       for(let j=0;j<5;j++){
@@ -819,7 +833,6 @@ function buildSideScenery(T){
       fxList.push({type:'cloud', mesh:cg, speed:.25+Math.random()*.4});
       scene.add(cg);
     }
-    // Hot air balloon
     const ball = new THREE.Group();
     const env = new THREE.Mesh(new THREE.SphereGeometry(10.5,12,12),
       new THREE.MeshPhongMaterial({color:0xFF8800}));
@@ -850,7 +863,7 @@ function buildSideScenery(T){
   }
 }
 
-// Scenery helpers (same)
+// Scenery helpers
 function mkPalm(x,y,z){
   const g=new THREE.Group();
   const h=5+Math.random()*3.5;
@@ -864,7 +877,6 @@ function mkPalm(x,y,z){
     fr.position.set(Math.cos(fa)*1.25, h, Math.sin(fa)*1.25);
     fr.rotation.set(-.5, fa, .3); g.add(fr);
   }
-  // Coconuts
   for(let i=0;i<3;i++){
     const co=new THREE.Mesh(new THREE.SphereGeometry(.22,7,7),
       new THREE.MeshPhongMaterial({color:0x7B5A14}));
@@ -882,7 +894,6 @@ function mkBeachUmbrella(x,y,z){
   const top=new THREE.Mesh(new THREE.ConeGeometry(1.6,.55,9),
     new THREE.MeshPhongMaterial({color:cols[Math.floor(Math.random()*cols.length)]}));
   top.position.y=2.15; g.add(top);
-  // Chair
   const chair=new THREE.Mesh(new THREE.BoxGeometry(1,.1,1.8),
     new THREE.MeshPhongMaterial({color:0xF5D060}));
   chair.position.set(.6,.1,0); g.add(chair);
@@ -933,7 +944,7 @@ function mkArenaPillar(x,y,z){
 }
 
 // ============================================================
-//  RACER CLASS (with off-road slowdown)
+//  RACER CLASS (with smooth drifting)
 // ============================================================
 class Racer {
   constructor(cidx, isPlayer, startX, lane, name, personality){
@@ -950,16 +961,17 @@ class Racer {
       aggression: Math.random() * 0.8 + 0.2,
       consistency: Math.random() * 0.7 + 0.3,
       bravery: Math.random() * 0.9 + 0.1,
-      itemUsage: Math.random() * 0.6 + 0.2
+      itemUsage: Math.random() * 0.6 + 0.2,
+      driftSkill: Math.random() * 0.8 + 0.2
     };
 
     const up = isPlayer ? SD.upgrades : {engine:0,handling:0,armor:0,boost:0};
     
-    // Base stats with personality modifications (reduced for longer laps)
-    const personalityFactor = this.personality.consistency;
-    this.maxSpd   = (this.def.spd + up.engine) * 1.4 + 8; // Lower top speed ~ 18-24 m/s
+    // Base stats with drift factor
+    this.maxSpd   = (this.def.spd + up.engine) * 1.5 + 12; // ~27-35 m/s
     this.acc      = (this.def.acc + up.engine) * .32;
     this.hdl      = (this.def.hdl + up.handling) * .25;
+    this.driftFactor = (this.def.drift + up.handling) * .08; // Drift capability
     this.armor    = (this.def.arm + up.armor)*10 + 25;
     this.maxArmor = this.armor;
     this.boostE   = 100;
@@ -975,6 +987,11 @@ class Racer {
     this.wAngle = 0; 
     this.leanAngle = 0;
     this.isBoosting = false;
+    
+    // Drift state
+    this.drifting = false;
+    this.driftAngle = 0;
+    this.driftCharge = 0;
     
     // AI memory
     this.lastCollision = 0;
@@ -1011,7 +1028,8 @@ class Racer {
 
   syncMesh(){
     this.mesh.position.set(this.x, .6, this.z);
-    this.mesh.rotation.y = Math.PI/2;
+    // Add drift angle to rotation
+    this.mesh.rotation.y = Math.PI/2 + this.driftAngle * 0.5;
     this.mesh.rotation.z = this.leanAngle;
     this.shadowCircle.position.set(this.x, .025, this.z);
     if(this.shieldMesh.visible) this.shieldMesh.rotation.y += .035;
@@ -1038,6 +1056,13 @@ class Racer {
       high: 1.2
     }[SD.settings.aggression] || 0.9;
 
+    // Drift assist setting
+    const driftAssist = {
+      off: 0,
+      light: 0.5,
+      full: 1.0
+    }[SD.settings.driftAssist] || 0.5;
+
     // Timers
     if(this.shieldT > 0){ this.shieldT -= dt; if(this.shieldT<=0){ this.shield=false; this.shieldMesh.visible=false; } }
     if(this.invT   > 0){ this.invT   -= dt; if(this.invT  <=0) this.inv=false; }
@@ -1052,11 +1077,11 @@ class Racer {
 
     const sM = this.slowed ? .35 : 1;
 
-    // Off-road check (only for player, AI also affected but we handle later)
+    // Off-road check
     const onRoad = this.z > ROAD_LEFT && this.z < ROAD_RIGHT;
     let offroadFactor = 1.0;
     if(!onRoad) {
-      offroadFactor = 0.65; // 35% speed reduction off-road
+      offroadFactor = 0.65;
       if(this.isP) {
         document.getElementById('offroadWarning').style.opacity = '1';
         offroadTimer = 0.2;
@@ -1066,32 +1091,90 @@ class Racer {
     }
 
     if(this.isP){
-      // Player control with slipstream detection
+      // PLAYER CONTROL WITH SMOOTH DRIFTING
+      
+      // Calculate steering input with smoothness
+      const steerInput = (inp.l ? -1 : (inp.r ? 1 : 0)) * this.hdl * 12;
+      
+      // Drift detection - initiated by sharp turn + speed
+      const speedThreshold = this.maxSpd * 0.5;
+      const shouldDrift = Math.abs(steerInput) > this.hdl * 8 && this.vx > speedThreshold && onRoad;
+      
+      if(shouldDrift && !this.drifting) {
+        // Start drift
+        this.drifting = true;
+        this.driftAngle = steerInput * 0.15 * this.driftFactor;
+        sfx.drift();
+      }
+      
+      if(this.drifting) {
+        // Maintain drift angle based on steering
+        const targetDrift = steerInput * 0.2 * this.driftFactor;
+        this.driftAngle += (targetDrift - this.driftAngle) * dt * 8;
+        
+        // Build drift charge (for boost)
+        if(Math.abs(this.driftAngle) > 0.1 && this.vx > speedThreshold) {
+          this.driftCharge = Math.min(MAX_DRIFT_CHARGE, this.driftCharge + dt * 15 * this.driftFactor);
+        }
+        
+        // Speed maintenance during drift (minimal loss)
+        this.vx *= (1 - dt * 0.05); // Very slight speed loss
+        
+        // Apply drift to lateral movement
+        this.vz += this.driftAngle * this.vx * dt * 1.5;
+        
+        // End drift when steering centers
+        if(Math.abs(steerInput) < 1 && Math.abs(this.driftAngle) < 0.05) {
+          this.drifting = false;
+          
+          // Release drift charge as boost
+          if(this.driftCharge >= MAX_DRIFT_CHARGE * 0.5) {
+            const boostAmount = this.driftCharge * 0.15;
+            this.boostE = Math.min(this.maxBoost, this.boostE + boostAmount);
+            if(this.isP) showNotif('⚡ DRIFT BOOST!', '#FF8800');
+            this.driftCharge = 0;
+          }
+        }
+      } else {
+        // Normal steering
+        this.driftAngle *= (1 - dt * 8); // Fade out drift angle
+        this.vz += steerInput * dt * 0.8;
+      }
+      
+      // Update UI for drift
+      if(this.isP) {
+        const driftIndicator = document.getElementById('driftIndicator');
+        const driftBar = document.getElementById('driftBar');
+        if(this.drifting) {
+          driftIndicator.style.opacity = '1';
+          driftBar.style.width = (this.driftCharge / MAX_DRIFT_CHARGE * 100) + '%';
+        } else {
+          driftIndicator.style.opacity = '0';
+        }
+      }
+
+      // Acceleration
       let tgt = inp.f ? this.maxSpd*sM : (inp.b ? -this.maxSpd*.25*sM : 0);
-      // Apply off-road penalty
       tgt *= offroadFactor;
       
       this.vx += (tgt - this.vx) * this.acc * dt * 60;
       if(Math.abs(this.vx) < .04 && !inp.f && !inp.b) this.vx = 0;
 
-      // Check for slipstream (drafting)
+      // Slipstream
       slipstreamActive = false;
       racers.forEach(r => {
         if(!r.isP && !r.finished && Math.abs(r.x - this.x) < 15 && Math.abs(r.x - this.x) > 4 && Math.abs(r.z - this.z) < 4.5) {
           slipstreamActive = true;
-          this.vx += 0.7 * dt * 60; // Speed boost from drafting
+          this.vx += 0.7 * dt * 60;
         }
       });
       document.getElementById('slipstream').style.opacity = slipstreamActive ? '1' : '0';
 
-      if(inp.l)       this.vz = -this.hdl * 10 * sM * offroadFactor;
-      else if(inp.r)  this.vz =  this.hdl * 10 * sM * offroadFactor;
-      else            this.vz *= .7;
+      // Lean angle for visual
+      this.leanAngle += (steerInput * 0.03 - this.leanAngle) * dt * 8;
 
-      const tgtLean = inp.l ? -.42 : inp.r ? .42 : 0;
-      this.leanAngle += (tgtLean - this.leanAngle) * .14;
-
-      if(inp.boost && this.boostE > 0 && onRoad){ // Can't boost off-road
+      // Boost
+      if(inp.boost && this.boostE > 0 && onRoad){
         this.isBoosting = true;
         const bTgt = this.maxSpd * 1.7 * sM;
         this.vx += (bTgt - this.vx) * this.acc * 4;
@@ -1107,10 +1190,9 @@ class Racer {
         document.getElementById('speedLines').style.opacity = sl+'';
       }
     } else {
-      // AI logic (similar but with off-road penalty)
+      // AI CONTROL (simplified drift)
       const player = racers.find(r => r.isP);
       const inFront = racers.filter(r => !r.isP && r.x > this.x && !r.finished);
-      const behind = racers.filter(r => !r.isP && r.x < this.x && !r.finished);
       
       if(this.tacticalTimer <= 0) {
         this.tacticalTimer = 2 + Math.random() * 3;
@@ -1133,27 +1215,25 @@ class Racer {
         }
       }
 
-      // Base speed with off-road penalty
       let targetSpeed = this.maxSpd * dM * rubberBand * sM;
       if(!onRoad) targetSpeed *= 0.7;
 
-      // Slipstream for AI
-      racers.forEach(r => {
-        if(r !== this && !r.finished && Math.abs(r.x - this.x) < 15 && Math.abs(r.x - this.x) > 4 && Math.abs(r.z - this.z) < 4.5) {
-          targetSpeed *= 1.07;
-        }
-      });
+      // AI drifting for corners
+      const ahead = racers.find(r => r !== this && !r.finished && Math.abs(r.x - this.x) < 30);
+      const shouldDrift = Math.abs(this.targetZ - this.z) > LANE_W * 1.5 && this.vx > this.maxSpd * 0.6;
+      
+      if(shouldDrift && this.personality.driftSkill > 0.4) {
+        this.drifting = true;
+        this.driftAngle = (this.targetZ - this.z) * 0.02 * this.personality.driftSkill;
+        this.vx *= (1 - dt * 0.03); // AI drift speed loss
+      } else {
+        this.drifting = false;
+        this.driftAngle *= (1 - dt * 5);
+      }
 
-      this.vx += (targetSpeed - this.vx) * this.acc * (1.8 + (0.5 * this.personality.aggression)) * dt;
-
-      // Lane changes (AI tries to stay on road)
+      // AI movement
       if(Math.random() < 0.012 * (this.personality.bravery)) {
-        const ahead = racers.find(r => r !== this && !r.finished && 
-          Math.abs(r.x - this.x) < 30 && 
-          Math.abs(r.x - this.x) > 4 && 
-          Math.abs(r.z - this.z) < 4);
-        
-        if(ahead) {
+        if(ahead && Math.abs(ahead.x - this.x) < 25 && Math.abs(ahead.z - this.z) < 4) {
           const leftClear = !racers.some(r => r !== this && Math.abs(r.x - this.x) < 18 && Math.abs(r.z - (this.z - LANE_W)) < 4);
           const rightClear = !racers.some(r => r !== this && Math.abs(r.x - this.x) < 18 && Math.abs(r.z - (this.z + LANE_W)) < 4);
           
@@ -1162,24 +1242,21 @@ class Racer {
           } else if(rightClear && this.z < ROAD_RIGHT - LANE_W) {
             this.targetZ = this.z + LANE_W;
           }
-        } else {
-          if(Math.random() < this.personality.aggression * 0.1) {
-            this.targetZ = this.z + (Math.random() - 0.5) * LANE_W * 0.4;
-          }
         }
       }
 
       const dz = this.targetZ - this.z;
       this.vz = dz * (1.4 + this.personality.aggression) * dt * 60;
-      this.vz = Math.max(-3.5, Math.min(3.5, this.vz));
+      this.vz += this.driftAngle * this.vx * dt * (this.personality.driftSkill ? 1.2 : 0.5);
+      this.vz = Math.max(-4, Math.min(4, this.vz));
       this.vz *= 0.85;
-      this.leanAngle = this.vz * 0.08;
 
-      // AI boost usage
+      this.vx += (targetSpeed - this.vx) * this.acc * (1.8 + (0.5 * this.personality.aggression)) * dt;
+
+      // AI boost
       if(this.boostE > 30 && !this.slowed && !this.frozen && onRoad) {
         const shouldBoost = (
           (this.currentTarget === 1 && Math.random() < 0.3) ||
-          (slipstreamActive && Math.random() < 0.4) ||
           (this.lap === LAP_TOTAL && this.x > ROAD_LEN * 0.7)
         );
         if(shouldBoost) {
@@ -1192,7 +1269,7 @@ class Racer {
         }
       }
 
-      // AI item use (same as before)
+      // AI item use
       if(this.item && this.aiItemCD <= 0) {
         const itemUseChance = this.personality.itemUsage * 0.012;
         if(this.item.id === 'shield' && this.armor < this.maxArmor * 0.3) {
@@ -1220,8 +1297,8 @@ class Racer {
     this.x += this.vx * dt;
     this.z += this.vz * dt;
     
-    // Clamp to road (allow slight off-road but with penalty)
-    const hardLimit = ROAD_W/2 + 1.5; // Allow a bit beyond barriers
+    // Clamp to road
+    const hardLimit = ROAD_W/2 + 1.5;
     if(this.z < -hardLimit) { this.z = -hardLimit; this.vz = 0; }
     if(this.z > hardLimit) { this.z = hardLimit; this.vz = 0; }
 
@@ -1293,7 +1370,7 @@ class Racer {
     if(!this.finished && this.x >= ROAD_LEN){
       if(this.lap < LAP_TOTAL){
         this.lap++;
-        this.x = 10; // Reset to start
+        this.x = 12;
         if(this.isP){
           updateLapUI();
           sfx.lap();
@@ -1422,7 +1499,6 @@ function updateProjectiles(dt){
 }
 
 function updateFX(dt){
-  // Pickup boxes spin & float
   pickups.forEach(pk=>{
     if(pk.active){
       pk.mesh.rotation.y += dt*2.4;
@@ -1432,11 +1508,9 @@ function updateFX(dt){
       if(pk.respawnT<=0){ pk.active=true; pk.mesh.visible=true; }
     }
   });
-  // Boost pad pulse
   boostPads.forEach(bp=>{
     bp.mesh.material.emissiveIntensity = .55+Math.sin(Date.now()*.006)*.38;
   });
-  // Explosion fade
   for(let i=fxList.length-1;i>=0;i--){
     const fx=fxList[i];
     if(fx.type==='explode'){
@@ -1455,7 +1529,6 @@ function updateFX(dt){
     }
   }
 
-  // Off-road timer
   if(offroadTimer > 0) {
     offroadTimer -= dt;
     if(offroadTimer <= 0) document.getElementById('offroadWarning').style.opacity = '0';
@@ -1463,14 +1536,15 @@ function updateFX(dt){
 }
 
 // ── Camera ─────────────────────────────────────────────────────
-const camCur  = new THREE.Vector3(-22, 10, 0);
-const camTgt  = new THREE.Vector3(0, 0, 0);
+const camCur  = new THREE.Vector3(-24, 10, 0);
 const lookCur = new THREE.Vector3(30, 1.8, 0);
 
 function updateCamera(dt){
   if(!playerR) return;
   const px=playerR.x, pz=playerR.z;
-  const desiredPos = new THREE.Vector3(px-24, 10+playerR.vz*.2, pz+playerR.leanAngle*.9);
+  // Add drift to camera position
+  const driftOffset = playerR.driftAngle * 2;
+  const desiredPos = new THREE.Vector3(px-24 + driftOffset, 10+playerR.vz*.2, pz+playerR.leanAngle*.9);
   if(shakeAmt>0){
     desiredPos.y += (Math.random()-.5)*shakeAmt*2.2;
     desiredPos.z += (Math.random()-.5)*shakeAmt;
@@ -1479,7 +1553,7 @@ function updateCamera(dt){
   camCur.lerp(desiredPos, dt*7);
   camera.position.copy(camCur);
 
-  const desiredLook = new THREE.Vector3(px+32, 1.8, pz);
+  const desiredLook = new THREE.Vector3(px+32 + driftOffset*0.5, 1.8, pz);
   lookCur.lerp(desiredLook, dt*9);
   camera.lookAt(lookCur);
 
@@ -1493,17 +1567,14 @@ const spdCtx = document.getElementById('speedoCanvas').getContext('2d');
 function drawSpeedo(spd, maxSpd){
   const ctx=spdCtx, w=190, h=118, cx=95, cy=100, r=79;
   ctx.clearRect(0,0,w,h);
-  // Arc track
   ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,Math.PI*2);
   ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=11; ctx.stroke();
-  // Filled arc
   const pct=Math.min(1,Math.abs(spd)/Math.max(.01,maxSpd));
   const col=pct>.82?'#FF2244':pct>.48?'#FFAA00':'#00FFC8';
   ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,Math.PI+Math.PI*pct);
   ctx.strokeStyle=col; ctx.lineWidth=11; ctx.lineCap='round'; ctx.stroke();
   ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,Math.PI+Math.PI*pct);
   ctx.strokeStyle=col+'44'; ctx.lineWidth=20; ctx.stroke();
-  // Tick marks
   for(let t=0;t<=10;t++){
     const a=Math.PI+t/10*Math.PI;
     const inner = t%5===0 ? r-20 : r-11;
@@ -1513,7 +1584,6 @@ function drawSpeedo(spd, maxSpd){
     ctx.strokeStyle = t%5===0 ? 'rgba(255,255,255,.55)':'rgba(255,255,255,.18)';
     ctx.lineWidth = t%5===0 ? 2.2 : 1; ctx.stroke();
   }
-  // Needle
   const na=Math.PI+pct*Math.PI;
   ctx.beginPath();
   ctx.moveTo(cx+Math.cos(na+Math.PI)*11, cy+Math.sin(na+Math.PI)*11);
@@ -1530,19 +1600,14 @@ function drawMinimap(){
   const w=140,h=86;
   mmCtx.clearRect(0,0,w,h);
   mmCtx.fillStyle='#020A14'; mmCtx.fillRect(0,0,w,h);
-  // Road bar
   mmCtx.fillStyle='#3A3A3A'; mmCtx.fillRect(4,h/2-9,w-8,18);
-  // Progress fill
   if(playerR){
     const lp=(playerR.x/ROAD_LEN);
     mmCtx.fillStyle='rgba(0,255,200,.28)'; mmCtx.fillRect(4,h/2-9,lp*(w-8),18);
   }
-  // Finish line
   const fx2=(ROAD_LEN-20)/ROAD_LEN*(w-8)+4;
   mmCtx.fillStyle='#FFD700'; mmCtx.fillRect(fx2-1.5,h/2-10,3,20);
-  // Start
   mmCtx.fillStyle='rgba(255,255,255,.4)'; mmCtx.fillRect(4,h/2-10,3,20);
-  // Racers
   racers.forEach(r=>{
     const rx = Math.max(5, Math.min(w-5, r.x/ROAD_LEN*(w-8)+4));
     const rz = (r.z/ROAD_W+.5)*14 + (h/2-7);
@@ -1551,7 +1616,6 @@ function drawMinimap(){
     mmCtx.fill();
     if(r.isP){ mmCtx.strokeStyle='#fff'; mmCtx.lineWidth=1.5; mmCtx.stroke(); }
   });
-  // Border
   mmCtx.strokeStyle='rgba(0,255,200,.35)'; mmCtx.lineWidth=1.5;
   mmCtx.strokeRect(1,1,w-2,h-2);
 }
@@ -1657,21 +1721,20 @@ function spawnRacers(){
   racers.forEach(r=>{ if(r.mesh) scene.remove(r.mesh); if(r.shadowCircle) scene.remove(r.shadowCircle); });
   racers = []; playerR = null;
   
-  // AI personalities
   const personalities = [
-    { aggression: 0.8, consistency: 0.9, bravery: 0.7, itemUsage: 0.6 },
-    { aggression: 0.6, consistency: 0.5, bravery: 0.8, itemUsage: 0.7 },
-    { aggression: 0.9, consistency: 0.4, bravery: 0.9, itemUsage: 0.8 },
-    { aggression: 0.3, consistency: 0.8, bravery: 0.4, itemUsage: 0.3 },
-    { aggression: 0.7, consistency: 0.6, bravery: 0.6, itemUsage: 0.5 },
-    { aggression: 0.5, consistency: 0.9, bravery: 0.5, itemUsage: 0.4 },
-    { aggression: 0.4, consistency: 0.7, bravery: 0.3, itemUsage: 0.2 }
+    { aggression: 0.8, consistency: 0.9, bravery: 0.7, itemUsage: 0.6, driftSkill: 0.8 },
+    { aggression: 0.6, consistency: 0.5, bravery: 0.8, itemUsage: 0.7, driftSkill: 0.9 },
+    { aggression: 0.9, consistency: 0.4, bravery: 0.9, itemUsage: 0.8, driftSkill: 0.6 },
+    { aggression: 0.3, consistency: 0.8, bravery: 0.4, itemUsage: 0.3, driftSkill: 0.5 },
+    { aggression: 0.7, consistency: 0.6, bravery: 0.6, itemUsage: 0.5, driftSkill: 0.7 },
+    { aggression: 0.5, consistency: 0.9, bravery: 0.5, itemUsage: 0.4, driftSkill: 0.8 },
+    { aggression: 0.4, consistency: 0.7, bravery: 0.3, itemUsage: 0.2, driftSkill: 0.4 }
   ];
   
   playerR = new Racer(SD.selectedCar, true, 12, 5, 'YOU');
   racers.push(playerR);
   
-  const aiNames = ['Beach Pro', 'Sand Shark', 'Dune Master', 'Wave Rider', 'Coast Crusher', 'Tide Runner', 'Boss'];
+  const aiNames = ['Drift King', 'Slide Master', 'Beach Pro', 'Dune Drifter', 'Wave Rider', 'Sand Storm', 'Boss'];
   const cup = CUPS[cupIdx];
   
   for(let i=0;i<7;i++){
@@ -1732,7 +1795,6 @@ function showResults(){
   titleEl.textContent = titleMap[pR] || '🏁 RACE OVER';
   titleEl.style.color = pR===1?'#FFD700':pR===2?'#C0C0C0':pR===3?'#CD7F32':'#FF4466';
 
-  // Podium
   const podEl = document.getElementById('podiumRow'); podEl.innerHTML='';
   const podH=[105,72,52], podC=['#FFD700','#C0C0C0','#CD7F32'], podE=['🥇','🥈','🥉'];
   sorted.slice(0,3).forEach((r,i)=>{
@@ -1746,7 +1808,6 @@ function showResults(){
 
   document.getElementById('rewardBadge').textContent = '+'+coinsEarned+' 🪙 COINS EARNED';
 
-  // Table
   let tbl='<thead><tr><th>#</th><th>RACER</th><th>ARMOR</th><th>LAP</th><th>TIME</th><th>BEST LAP</th></tr></thead><tbody>';
   sorted.forEach((r,i)=>{
     const you = r.isP ? ' class="you"' : '';
@@ -1853,6 +1914,7 @@ function startCup(ci){
 function loadSettings(){
   document.getElementById('diffSel').value = SD.settings.difficulty;
   document.getElementById('aggroSel').value = SD.settings.aggression || 'medium';
+  document.getElementById('driftAssistSel').value = SD.settings.driftAssist || 'light';
   const b=document.getElementById('sfxT');
   b.textContent=SD.settings.sfx?'ON':'OFF';
   b.className=SD.settings.sfx?'tog on':'tog';
@@ -1915,7 +1977,7 @@ function getInput(){
 }
 
 // ============================================================
-//  MENU 3D SCENE (unchanged)
+//  MENU 3D SCENE
 // ============================================================
 const menuScene = new THREE.Scene();
 const menuCam   = new THREE.PerspectiveCamera(58, innerWidth/innerHeight, .1, 600);
@@ -1929,22 +1991,18 @@ let menuCars = [], menuAngle = 0;
   const dl = new THREE.DirectionalLight(0xFFD700, 1.4); dl.position.set(28,38,28); menuScene.add(dl);
   const dl2 = new THREE.DirectionalLight(0x4488FF, .55); dl2.position.set(-28,20,-18); menuScene.add(dl2);
 
-  // Road
   const road = new THREE.Mesh(new THREE.PlaneGeometry(500,30),
     new THREE.MeshPhongMaterial({color:0x888888, shininess:22}));
   road.rotation.x = -Math.PI/2; road.position.y=-2; menuScene.add(road);
 
-  // Ground
   const gnd = new THREE.Mesh(new THREE.PlaneGeometry(500,220),
     new THREE.MeshPhongMaterial({color:0x0A1A0A}));
   gnd.rotation.x=-Math.PI/2; gnd.position.y=-2.25; menuScene.add(gnd);
 
-  // Ocean
   const oc = new THREE.Mesh(new THREE.PlaneGeometry(500,70),
     new THREE.MeshPhongMaterial({color:0x0066AA, transparent:true, opacity:.55, shininess:200}));
   oc.rotation.x=-Math.PI/2; oc.position.set(0,-2.6,-35); menuScene.add(oc);
 
-  // Menu cars
   CARS.slice(0,6).forEach((cd,i)=>{
     const m = buildCarMesh(cd); m.scale.setScalar(1.12);
     const startX = -100 + i*35;
@@ -1954,18 +2012,15 @@ let menuCars = [], menuAngle = 0;
     menuCars.push({mesh:m, spd:.22+cd.spd*.009, x:startX});
   });
 
-  // Stars
   const sg=new THREE.BufferGeometry(); const sv=[];
   for(let i=0;i<800;i++) sv.push((Math.random()-.5)*600,(Math.random()-.5)*350+60,(Math.random()-.5)*600);
   sg.setAttribute('position',new THREE.Float32BufferAttribute(sv,3));
   menuScene.add(new THREE.Points(sg, new THREE.PointsMaterial({color:0xFFFFFF,size:.6})));
 
-  // Palm trees
   [[-35,0,-20],[35,0,-20],[-35,0,20],[35,0,20],[-70,0,-18],[70,0,-18]].forEach(([px,py,pz])=>{
     const p=mkPalm(0,0,0); p.position.set(px,-2,pz); p.scale.setScalar(1.45); menuScene.add(p);
   });
 
-  // Colored lights
   CARS.slice(0,4).forEach((cd,i)=>{
     const lp=new THREE.PointLight(cd.col,.4,60);
     lp.position.set(Math.cos(i/4*Math.PI*2)*55,18,Math.sin(i/4*Math.PI*2)*22);
@@ -2035,8 +2090,8 @@ loop(0);
 // ── Init ───────────────────────────────────────────────────────
 showScreen('titleScreen');
 gState = 'menu';
-console.log('%c🏖️ BRU KART RACING — BEACH BUGGY CHAMPIONSHIP','color:#FFD700;font-size:18px;font-weight:900');
-console.log('%cBy INEZA AIME BRUNO | 3-Minute Laps, Off-Road Slowdown, Realistic AI','color:#00FFC8');
+console.log('%c🏖️ BRU KART RACING — BEACH BUGGY DRIFT','color:#FFD700;font-size:18px;font-weight:900');
+console.log('%cBy INEZA AIME BRUNO | Smooth Drifting, 3-Min Laps, Off-Road Physics','color:#00FFC8');
 </script>
 </body>
 </html>

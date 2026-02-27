@@ -5,6 +5,120 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BRU KART RACING – Beach Buggy</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="gc"></canvas>
+
+<!-- HUD -->
+<div id="hud" class="off">
+  <div id="lapWrap"><div id="lapLabel">LAP</div><div id="lapNum">1 / 3</div></div>
+  <div id="raceTimer">0:00</div>
+  <div id="posBadge"><div id="posNum">1</div><div id="posSuffix">ST</div><div id="posOf">of 8</div></div>
+  <div id="coinBadge">🪙 <span id="hudCoins">0</span></div>
+  <div id="statusBars">
+    <div class="sbar"><div class="sbar-label"><span>ARMOR</span><span id="hpPct">100%</span></div><div class="sbar-track"><div class="sbar-fill" id="hpFill" style="width:100%"></div></div></div>
+    <div class="sbar"><div class="sbar-label"><span>BOOST</span><span id="boostPct">100%</span></div><div class="sbar-track"><div class="sbar-fill" id="boostFill" style="width:100%"></div></div></div>
+  </div>
+  <div id="speedoWrap"><canvas id="speedoCanvas" width="190" height="118"></canvas><div id="speedNum">0</div><div id="speedUnit">KM/H</div></div>
+  <div id="mmWrap"><canvas id="mmCanvas" width="140" height="86"></canvas></div>
+  <div id="itemBox" onclick="useItem()"><div id="itemEmoji">❓</div><div id="itemLabel">NO ITEM</div><div id="useHint">[SPACE]</div></div>
+  <div id="countdown"><div id="cdNum" style="color:#FFD700">3</div></div>
+  <div id="notif"></div>
+  <div id="boostFlash"></div>
+  <div id="speedLines"></div>
+  <div id="damageFlash"></div>
+  <div id="lapFlash"></div>
+</div>
+
+<!-- WIN BANNER -->
+<div id="winBanner">
+  <div id="winText">🏆 YOU WIN!</div>
+  <div id="winSub">RACE FINISHED</div>
+  <button class="mbtn mbtn-gold" style="margin-top:32px" onclick="showResults()">SEE RESULTS →</button>
+</div>
+
+<!-- TITLE SCREEN -->
+<div class="screen" id="titleScreen">
+  <div id="ts-sun"></div>
+  <div id="ts-waves"><div class="wave w1"></div><div class="wave w2"></div><div class="wave w3"></div></div>
+  <div id="ts-palms"><span class="tpalm">🌴</span><span class="tpalm">🌴</span></div>
+  <div id="logo">BRU KART RACING</div>
+  <div id="logo-sub">BEACH BUGGY EDITION</div>
+  <div id="logo-tag">BY INEZA AIME BRUNO</div>
+  <button class="mbtn mbtn-gold" onclick="startQuickRace()">🏖️ QUICK RACE</button>
+  <button class="mbtn mbtn-gold" onclick="showScreen('champScreen')">🏆 CHAMPIONSHIP</button>
+  <button class="mbtn mbtn-blue" onclick="showScreen('garageScreen')">🚗 GARAGE</button>
+  <button class="mbtn mbtn-teal" onclick="showScreen('shopScreen')">🛒 SHOP</button>
+  <button class="mbtn mbtn-dark" onclick="showScreen('settingsScreen')">⚙️ SETTINGS</button>
+  <div id="creditsLine">INEZA AIME BRUNO • 2025</div>
+</div>
+
+<!-- CHAMPIONSHIP -->
+<div class="screen off" id="champScreen">
+  <div class="scr-title">🏆 CHAMPIONSHIP</div>
+  <div class="cug" id="cupGrid"></div>
+  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
+</div>
+
+<!-- GARAGE -->
+<div class="screen off" id="garageScreen">
+  <div class="scr-title">🚗 GARAGE</div>
+  <div class="cg" id="carGrid"></div>
+  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
+</div>
+
+<!-- SHOP -->
+<div class="screen off" id="shopScreen">
+  <div class="scr-title">🛒 SHOP</div>
+  <p style="color:var(--neon);font-family:'Orbitron',sans-serif;font-size:16px;margin-bottom:20px">🪙 <span id="shopCoins">0</span> COINS</p>
+  <div class="sg" id="shopGrid"></div>
+  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
+</div>
+
+<!-- SETTINGS -->
+<div class="screen off" id="settingsScreen">
+  <div class="scr-title">⚙️ SETTINGS</div>
+  <div class="sr"><label>SOUND FX</label><button class="tog on" id="sfxT" onclick="toggleSFX()">ON</button></div>
+  <div class="sr"><label>DIFFICULTY</label><select id="diffSel" onchange="saveSetting('difficulty',this.value)">
+    <option value="easy">EASY</option><option value="medium" selected>MEDIUM</option><option value="hard">HARD</option>
+  </select></div>
+  <div class="sr"><label>RESET PROGRESS</label><button class="mbtn mbtn-red" style="margin:0;padding:7px 20px;min-width:0;font-size:11px" onclick="resetProgress()">RESET</button></div>
+  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
+</div>
+
+<!-- RESULTS -->
+<div class="screen off" id="resultsScreen">
+  <div class="rt-title" id="rTitle">🏆 VICTORY!</div>
+  <div class="podRow" id="podiumRow"></div>
+  <div class="reward" id="rewardBadge">+200 🪙</div>
+  <table class="rtab" id="rTable"></table>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <button class="mbtn mbtn-gold" id="nextBtn" onclick="nextRace()" style="display:none">NEXT RACE ▶</button>
+    <button class="mbtn mbtn-blue" onclick="startQuickRace()">🔄 RACE AGAIN</button>
+    <button class="mbtn mbtn-red" onclick="showScreen('titleScreen')">MAIN MENU</button>
+  </div>
+</div>
+
+<!-- PAUSE -->
+<div class="screen off" id="pauseScreen">
+  <div class="scr-title">⏸ PAUSED</div>
+  <button class="mbtn mbtn-gold" onclick="resumeGame()">▶ RESUME</button>
+  <button class="mbtn mbtn-red" style="margin-top:10px" onclick="showScreen('titleScreen')">MAIN MENU</button>
+</div>
+
+<!-- TOUCH CONTROLS -->
+<div id="touchCtrl">
+  <div class="tpad dpad">
+    <div></div><div class="db" ontouchstart="td.f=true" ontouchend="td.f=false" ontouchcancel="td.f=false">▲</div><div></div>
+    <div class="db" ontouchstart="td.l=true" ontouchend="td.l=false" ontouchcancel="td.l=false">◄</div>
+    <div class="db" ontouchstart="td.b=true" ontouchend="td.b=false" ontouchcancel="td.b=false">▼</div>
+    <div class="db" ontouchstart="td.r=true" ontouchend="td.r=false" ontouchcancel="td.r=false">►</div>
+  </div>
+  <div class="actBtns">
+    <button class="ab ab-boost" ontouchstart="td.boost=true" ontouchend="td.boost=false">⚡ BOOST</button>
+    <button class="ab ab-item" onclick="useItem()">🎯 USE ITEM</button>
+  </div>
+</div>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -212,121 +326,6 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 /* Pause overlay */
 #pauseScreen{background:rgba(0,5,15,.88);backdrop-filter:blur(10px)}
 </style>
-</head>
-<body>
-<canvas id="gc"></canvas>
-
-<!-- HUD -->
-<div id="hud" class="off">
-  <div id="lapWrap"><div id="lapLabel">LAP</div><div id="lapNum">1 / 3</div></div>
-  <div id="raceTimer">0:00</div>
-  <div id="posBadge"><div id="posNum">1</div><div id="posSuffix">ST</div><div id="posOf">of 8</div></div>
-  <div id="coinBadge">🪙 <span id="hudCoins">0</span></div>
-  <div id="statusBars">
-    <div class="sbar"><div class="sbar-label"><span>ARMOR</span><span id="hpPct">100%</span></div><div class="sbar-track"><div class="sbar-fill" id="hpFill" style="width:100%"></div></div></div>
-    <div class="sbar"><div class="sbar-label"><span>BOOST</span><span id="boostPct">100%</span></div><div class="sbar-track"><div class="sbar-fill" id="boostFill" style="width:100%"></div></div></div>
-  </div>
-  <div id="speedoWrap"><canvas id="speedoCanvas" width="190" height="118"></canvas><div id="speedNum">0</div><div id="speedUnit">KM/H</div></div>
-  <div id="mmWrap"><canvas id="mmCanvas" width="140" height="86"></canvas></div>
-  <div id="itemBox" onclick="useItem()"><div id="itemEmoji">❓</div><div id="itemLabel">NO ITEM</div><div id="useHint">[SPACE]</div></div>
-  <div id="countdown"><div id="cdNum" style="color:#FFD700">3</div></div>
-  <div id="notif"></div>
-  <div id="boostFlash"></div>
-  <div id="speedLines"></div>
-  <div id="damageFlash"></div>
-  <div id="lapFlash"></div>
-</div>
-
-<!-- WIN BANNER -->
-<div id="winBanner">
-  <div id="winText">🏆 YOU WIN!</div>
-  <div id="winSub">RACE FINISHED</div>
-  <button class="mbtn mbtn-gold" style="margin-top:32px" onclick="showResults()">SEE RESULTS →</button>
-</div>
-
-<!-- TITLE SCREEN -->
-<div class="screen" id="titleScreen">
-  <div id="ts-sun"></div>
-  <div id="ts-waves"><div class="wave w1"></div><div class="wave w2"></div><div class="wave w3"></div></div>
-  <div id="ts-palms"><span class="tpalm">🌴</span><span class="tpalm">🌴</span></div>
-  <div id="logo">BRU KART RACING</div>
-  <div id="logo-sub">BEACH BUGGY EDITION</div>
-  <div id="logo-tag">BY INEZA AIME BRUNO</div>
-  <button class="mbtn mbtn-gold" onclick="startQuickRace()">🏖️ QUICK RACE</button>
-  <button class="mbtn mbtn-gold" onclick="showScreen('champScreen')">🏆 CHAMPIONSHIP</button>
-  <button class="mbtn mbtn-blue" onclick="showScreen('garageScreen')">🚗 GARAGE</button>
-  <button class="mbtn mbtn-teal" onclick="showScreen('shopScreen')">🛒 SHOP</button>
-  <button class="mbtn mbtn-dark" onclick="showScreen('settingsScreen')">⚙️ SETTINGS</button>
-  <div id="creditsLine">INEZA AIME BRUNO • 2025</div>
-</div>
-
-<!-- CHAMPIONSHIP -->
-<div class="screen off" id="champScreen">
-  <div class="scr-title">🏆 CHAMPIONSHIP</div>
-  <div class="cug" id="cupGrid"></div>
-  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
-</div>
-
-<!-- GARAGE -->
-<div class="screen off" id="garageScreen">
-  <div class="scr-title">🚗 GARAGE</div>
-  <div class="cg" id="carGrid"></div>
-  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
-</div>
-
-<!-- SHOP -->
-<div class="screen off" id="shopScreen">
-  <div class="scr-title">🛒 SHOP</div>
-  <p style="color:var(--neon);font-family:'Orbitron',sans-serif;font-size:16px;margin-bottom:20px">🪙 <span id="shopCoins">0</span> COINS</p>
-  <div class="sg" id="shopGrid"></div>
-  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
-</div>
-
-<!-- SETTINGS -->
-<div class="screen off" id="settingsScreen">
-  <div class="scr-title">⚙️ SETTINGS</div>
-  <div class="sr"><label>SOUND FX</label><button class="tog on" id="sfxT" onclick="toggleSFX()">ON</button></div>
-  <div class="sr"><label>DIFFICULTY</label><select id="diffSel" onchange="saveSetting('difficulty',this.value)">
-    <option value="easy">EASY</option><option value="medium" selected>MEDIUM</option><option value="hard">HARD</option>
-  </select></div>
-  <div class="sr"><label>RESET PROGRESS</label><button class="mbtn mbtn-red" style="margin:0;padding:7px 20px;min-width:0;font-size:11px" onclick="resetProgress()">RESET</button></div>
-  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
-</div>
-
-<!-- RESULTS -->
-<div class="screen off" id="resultsScreen">
-  <div class="rt-title" id="rTitle">🏆 VICTORY!</div>
-  <div class="podRow" id="podiumRow"></div>
-  <div class="reward" id="rewardBadge">+200 🪙</div>
-  <table class="rtab" id="rTable"></table>
-  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-    <button class="mbtn mbtn-gold" id="nextBtn" onclick="nextRace()" style="display:none">NEXT RACE ▶</button>
-    <button class="mbtn mbtn-blue" onclick="startQuickRace()">🔄 RACE AGAIN</button>
-    <button class="mbtn mbtn-red" onclick="showScreen('titleScreen')">MAIN MENU</button>
-  </div>
-</div>
-
-<!-- PAUSE -->
-<div class="screen off" id="pauseScreen">
-  <div class="scr-title">⏸ PAUSED</div>
-  <button class="mbtn mbtn-gold" onclick="resumeGame()">▶ RESUME</button>
-  <button class="mbtn mbtn-red" style="margin-top:10px" onclick="showScreen('titleScreen')">MAIN MENU</button>
-</div>
-
-<!-- TOUCH CONTROLS -->
-<div id="touchCtrl">
-  <div class="tpad dpad">
-    <div></div><div class="db" ontouchstart="td.f=true" ontouchend="td.f=false" ontouchcancel="td.f=false">▲</div><div></div>
-    <div class="db" ontouchstart="td.l=true" ontouchend="td.l=false" ontouchcancel="td.l=false">◄</div>
-    <div class="db" ontouchstart="td.b=true" ontouchend="td.b=false" ontouchcancel="td.b=false">▼</div>
-    <div class="db" ontouchstart="td.r=true" ontouchend="td.r=false" ontouchcancel="td.r=false">►</div>
-  </div>
-  <div class="actBtns">
-    <button class="ab ab-boost" ontouchstart="td.boost=true" ontouchend="td.boost=false">⚡ BOOST</button>
-    <button class="ab ab-item" onclick="useItem()">🎯 USE ITEM</button>
-  </div>
-</div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ============================================================

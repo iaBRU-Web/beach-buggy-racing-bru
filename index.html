@@ -3,17 +3,158 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BRU KART RACING – Beach Buggy</title>
+<title>BRU KART RACING – Beach Buggy Enhanced</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Rain canvas overlay -->
+<div id="rainOverlay"><canvas id="rainCanvas"></canvas></div>
+
+<canvas id="gc"></canvas>
+
+<div id="hud" class="off">
+  <div id="lapWrap"><div id="lapLabel">LAP</div><div id="lapNum">1 / 3</div></div>
+  <div id="raceTimer">0:00</div>
+  <div id="posBadge"><div id="posNum">1</div><div id="posSuffix">ST</div><div id="posOf">of 8</div></div>
+  <div id="weatherBadge"><div id="weatherEmoji">☀️</div><div id="weatherLabel">SUNNY</div></div>
+  <div id="coinBadge">🪙 <span id="hudCoins">0</span></div>
+  <div id="statusBars">
+    <div class="sbar"><div class="sbar-label"><span>ARMOR</span><span id="hpPct">100%</span></div><div class="sbar-track"><div class="sbar-fill" id="hpFill" style="width:100%"></div></div></div>
+    <div class="sbar"><div class="sbar-label"><span>BOOST</span><span id="boostPct">100%</span></div><div class="sbar-track"><div class="sbar-fill" id="boostFill" style="width:100%"></div></div></div>
+  </div>
+  <div id="comboHUD"><div id="comboNum">0x</div><div id="comboLabel">DRIFT COMBO</div><div id="comboBonus">+0</div></div>
+  <div id="speedoWrap"><canvas id="speedoCanvas" width="188" height="115"></canvas><div id="speedNum">0</div><div id="speedUnit">KM/H</div></div>
+  <div id="mmWrap"><canvas id="mmCanvas" width="160" height="55"></canvas></div>
+  <div id="itemBox" onclick="useItem()"><div id="itemEmoji">❓</div><div id="itemLabel">NO ITEM</div><div id="useHint">[SPACE]</div></div>
+  <div id="countdown"><div id="cdNum" style="color:#FFD700">3</div></div>
+  <div id="notif"></div>
+  <div id="boostFlash"></div>
+  <div id="speedLines"></div>
+  <div id="damageFlash"></div>
+  <div id="healFlash"></div>
+  <div id="lapFlash"></div>
+  <div id="driftHUD"><div id="driftBar"></div><div id="driftTxt">DRIFT BOOST</div></div>
+  <div id="offroadWarn">⚠ OFF ROAD</div>
+  <div id="wrongWay">↩ WRONG WAY!</div>
+  <div id="trackName"></div>
+  <div id="bestLapBadge">🏅 BEST LAP: --:--</div>
+</div>
+
+<div id="winBanner">
+  <div id="winText">🏆 YOU WIN!</div>
+  <div id="winSub">RACE FINISHED</div>
+  <button class="mbtn mbtn-gold" style="margin-top:30px" onclick="showResults()">SEE RESULTS →</button>
+</div>
+
+<!-- TITLE SCREEN -->
+<div class="screen" id="titleScreen">
+  <div id="ts-sun"></div>
+  <div id="ts-ocean"><div class="wv wv1"></div><div class="wv wv2"></div><div class="wv wv3"></div></div>
+  <div id="ts-palms"><span class="tpalm">🌴</span><span class="tpalm">🌴</span></div>
+  <div id="vBadge">v3.0 ENHANCED</div>
+  <div id="logo">BRU KART RACING</div>
+  <div id="logo-sub">BEACH BUGGY EDITION</div>
+  <div id="logo-tag">BY INEZA AIME BRUNO</div>
+  <button class="mbtn mbtn-gold" onclick="startQuickRace()">🏁 QUICK RACE</button>
+  <button class="mbtn mbtn-gold" onclick="showScreen('champScreen')">🏆 CHAMPIONSHIP</button>
+  <button class="mbtn mbtn-blue" onclick="showScreen('garageScreen')">🚗 GARAGE</button>
+  <button class="mbtn mbtn-teal" onclick="showScreen('shopScreen')">🛒 SHOP</button>
+  <button class="mbtn mbtn-purple" onclick="showScreen('challengeScreen')">⚡ CHALLENGES</button>
+  <button class="mbtn mbtn-dark" onclick="showScreen('settingsScreen')">⚙️ SETTINGS</button>
+  <div id="creditsLine">INEZA AIME BRUNO • 2025 | ↑↓ Gas/Brake  ←→ Steer  SHIFT Boost  SPACE Item  C=Camera  T=Trick  Esc=Pause</div>
+</div>
+
+<!-- CHAMPIONSHIP -->
+<div class="screen off" id="champScreen">
+  <div class="scr-title">🏆 CHAMPIONSHIP</div>
+  <div class="cug" id="cupGrid"></div>
+  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
+</div>
+
+<!-- GARAGE -->
+<div class="screen off" id="garageScreen">
+  <div class="scr-title">🚗 GARAGE</div>
+  <div class="cg" id="carGrid"></div>
+  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
+</div>
+
+<!-- SHOP -->
+<div class="screen off" id="shopScreen">
+  <div class="scr-title">🛒 SHOP</div>
+  <p style="color:var(--neon);font-family:'Orbitron',sans-serif;font-size:15px;margin-bottom:18px">🪙 <span id="shopCoins">0</span> COINS</p>
+  <div class="sg" id="shopGrid"></div>
+  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
+</div>
+
+<!-- NEW: CHALLENGES SCREEN -->
+<div class="screen off" id="challengeScreen">
+  <div class="scr-title">⚡ DAILY CHALLENGES</div>
+  <div id="challengeGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;max-width:700px;width:100%;padding:0 18px;margin-bottom:20px"></div>
+  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
+</div>
+
+<!-- SETTINGS -->
+<div class="screen off" id="settingsScreen">
+  <div class="scr-title">⚙️ SETTINGS</div>
+  <div class="sr"><label>SOUND FX</label><button class="tog on" id="sfxT" onclick="toggleSFX()">ON</button></div>
+  <div class="sr"><label>DIFFICULTY</label><select id="diffSel" onchange="saveSetting('difficulty',this.value)">
+    <option value="easy">EASY</option><option value="medium" selected>MEDIUM</option><option value="hard">HARD</option>
+  </select></div>
+  <div class="sr"><label>CAMERA MODE</label><select id="camSel" onchange="saveSetting('camMode',this.value)">
+    <option value="chase">CHASE</option><option value="low">LOW RIDER</option><option value="wide">WIDE</option>
+  </select></div>
+  <div class="sr"><label>SHOW SHADOWS</label><button class="tog on" id="shadowT" onclick="toggleShadows()">ON</button></div>
+  <div class="sr"><label>WEATHER FX</label><button class="tog on" id="weatherT" onclick="toggleWeather()">ON</button></div>
+  <div class="sr"><label>RESET PROGRESS</label><button class="mbtn mbtn-red" style="margin:0;padding:7px 18px;min-width:0;font-size:11px" onclick="resetProgress()">RESET</button></div>
+  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
+</div>
+
+<!-- RESULTS -->
+<div class="screen off" id="resultsScreen">
+  <div class="rt-title" id="rTitle">🏆 VICTORY!</div>
+  <div class="podRow" id="podiumRow"></div>
+  <div class="reward" id="rewardBadge">+200 🪙</div>
+  <div id="statRow" style="display:flex;gap:18px;margin-bottom:14px;font-size:12px;color:rgba(255,255,255,.45);letter-spacing:1px"></div>
+  <table class="rtab" id="rTable"></table>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+    <button class="mbtn mbtn-gold" id="nextBtn" onclick="nextRace()" style="display:none">NEXT RACE ▶</button>
+    <button class="mbtn mbtn-blue" onclick="startQuickRace()">🔄 RACE AGAIN</button>
+    <button class="mbtn mbtn-red" onclick="showScreen('titleScreen')">MAIN MENU</button>
+  </div>
+</div>
+
+<!-- PAUSE -->
+<div class="screen off" id="pauseScreen">
+  <div class="scr-title">⏸ PAUSED</div>
+  <div style="color:rgba(255,255,255,.4);font-size:12px;letter-spacing:2px;margin-bottom:20px" id="pauseStats"></div>
+  <button class="mbtn mbtn-gold" onclick="resumeGame()">▶ RESUME</button>
+  <button class="mbtn mbtn-blue" style="margin-top:8px" onclick="startQuickRace()">🔄 RESTART</button>
+  <button class="mbtn mbtn-red" style="margin-top:8px" onclick="showScreen('titleScreen')">MAIN MENU</button>
+</div>
+
+<!-- TOUCH CONTROLS -->
+<div id="touchCtrl">
+  <div class="tpad dpad">
+    <div></div><div class="db" id="db-f" ontouchstart="td.f=true" ontouchend="td.f=false" ontouchcancel="td.f=false">▲</div><div></div>
+    <div class="db" id="db-l" ontouchstart="td.l=true" ontouchend="td.l=false" ontouchcancel="td.l=false">◄</div>
+    <div class="db" id="db-b" ontouchstart="td.b=true" ontouchend="td.b=false" ontouchcancel="td.b=false">▼</div>
+    <div class="db" id="db-r" ontouchstart="td.r=true" ontouchend="td.r=false" ontouchcancel="td.r=false">►</div>
+  </div>
+  <div class="actBtns">
+    <button class="ab ab-boost" ontouchstart="td.boost=true" ontouchend="td.boost=false">⚡ BOOST</button>
+    <button class="ab ab-item" onclick="useItem()">🎯 ITEM</button>
+  </div>
+</div>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--gold:#FFD700;--neon:#00FFC8;--red:#FF2244;--panel:rgba(0,8,20,0.88);--r:12px}
+:root{--gold:#FFD700;--neon:#00FFC8;--red:#FF2244;--panel:rgba(0,8,20,0.90);--r:12px}
 body{background:#000;font-family:'Rajdhani',sans-serif;overflow:hidden;color:#fff;user-select:none;cursor:default}
 canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:0}
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100}
 .screen.off{display:none!important}
 
-/* TITLE */
+/* ── TITLE ──────────────────────────────────────────────── */
 #titleScreen{background:linear-gradient(170deg,#001830 0%,#002d55 40%,#001020 100%);overflow:hidden}
 #ts-sun{position:absolute;top:7%;left:50%;transform:translateX(-50%);width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,#FFFBE0 5%,#FFE566 35%,#FF9900 72%,#FF5500 100%);box-shadow:0 0 90px #FFD700,0 0 200px rgba(255,140,0,.45);animation:sPulse 3s ease-in-out infinite alternate}
 @keyframes sPulse{from{box-shadow:0 0 80px #FFD700,0 0 160px rgba(255,140,0,.4)}to{box-shadow:0 0 110px #FFE066,0 0 240px rgba(255,200,0,.55)}}
@@ -31,8 +172,12 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 @keyframes lgS{to{background-position:400% 0}}
 #logo-sub{font-family:'Rajdhani',sans-serif;font-size:clamp(10px,1.5vw,17px);letter-spacing:11px;color:rgba(255,255,200,.48);margin-bottom:6px;z-index:10;text-align:center}
 #logo-tag{font-family:'Rajdhani',sans-serif;font-size:13px;letter-spacing:3px;color:rgba(0,255,200,.58);margin-bottom:34px;z-index:10;text-align:center}
-#creditsLine{font-family:'Rajdhani',sans-serif;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.16);position:absolute;bottom:7px;left:50%;transform:translateX(-50%);z-index:10}
+#creditsLine{font-family:'Rajdhani',sans-serif;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.16);position:absolute;bottom:7px;left:50%;transform:translateX(-50%);z-index:10;white-space:nowrap}
 
+/* NEW: Version badge */
+#vBadge{position:absolute;top:14px;right:14px;background:linear-gradient(135deg,#003355,#00FFC8);border-radius:20px;padding:4px 12px;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:#fff;z-index:10}
+
+/* ── BUTTONS ─────────────────────────────────────────────── */
 .mbtn{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;padding:13px 40px;border-radius:50px;cursor:pointer;border:none;min-width:220px;margin:5px;text-transform:uppercase;position:relative;overflow:hidden;transition:transform .15s,box-shadow .2s;outline:none;z-index:10}
 .mbtn::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.18);transform:translateX(-110%) skewX(-14deg);transition:transform .32s}
 .mbtn:hover::before{transform:translateX(120%) skewX(-14deg)}
@@ -44,8 +189,9 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 .mbtn-red{background:linear-gradient(135deg,#550011,#FF2244,#880022);color:#fff}
 .mbtn-dark{background:linear-gradient(135deg,#111,#222);color:#999;border:1.5px solid rgba(255,255,255,.1)}
 .mbtn-teal{background:linear-gradient(135deg,#003322,#00CC88,#008855);color:#fff}
+.mbtn-purple{background:linear-gradient(135deg,#220044,#AA00FF,#660099);color:#fff}
 
-/* HUD */
+/* ── HUD ────────────────────────────────────────────────── */
 #hud{position:fixed;inset:0;pointer-events:none;z-index:50}
 #lapWrap{position:absolute;top:14px;left:16px;background:var(--panel);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:10px 18px}
 #lapLabel{font-size:9px;letter-spacing:4px;color:rgba(255,255,255,.35)}
@@ -64,18 +210,36 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 @keyframes shim{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
 #hpFill{background:linear-gradient(90deg,#FF2244,#FF8800)}
 #boostFill{background:linear-gradient(90deg,#0088FF,#00FFC8)}
-#coinBadge{position:absolute;top:84px;right:16px;background:var(--panel);backdrop-filter:blur(12px);border:1px solid rgba(255,215,0,.22);border-radius:var(--r);padding:8px 15px;font-family:'Orbitron',sans-serif;font-size:14px;color:var(--gold)}
+
+/* NEW: Weather + Time HUD badge */
+#weatherBadge{position:absolute;top:84px;right:16px;background:var(--panel);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:8px 14px;text-align:center;font-size:22px;line-height:1}
+#weatherLabel{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,.3);margin-top:2px}
+
+#coinBadge{position:absolute;top:130px;right:16px;background:var(--panel);backdrop-filter:blur(12px);border:1px solid rgba(255,215,0,.22);border-radius:var(--r);padding:8px 15px;font-family:'Orbitron',sans-serif;font-size:14px;color:var(--gold)}
+
+/* NEW: Trick combo display */
+#comboHUD{position:absolute;top:50%;right:16px;transform:translateY(-50%);text-align:right;pointer-events:none;opacity:0;transition:opacity .4s}
+#comboHUD.show{opacity:1}
+#comboNum{font-family:'Orbitron',sans-serif;font-size:44px;font-weight:900;color:#FF8800;text-shadow:0 0 30px #FF8800;line-height:1}
+#comboLabel{font-size:9px;letter-spacing:3px;color:rgba(255,200,100,.6)}
+#comboBonus{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--neon)}
+
 #speedoWrap{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:188px;height:115px}
 #speedoCanvas{width:188px;height:115px}
 #speedNum{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:25px;font-weight:900;color:#fff;text-shadow:0 0 14px var(--neon);white-space:nowrap}
 #speedUnit{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:3px;color:rgba(255,255,255,.35)}
 #mmWrap{position:absolute;bottom:14px;left:200px;width:160px;height:55px}
 #mmCanvas{border-radius:8px;border:2px solid rgba(255,255,255,.18)}
-#itemBox{position:absolute;bottom:14px;right:16px;width:90px;height:90px;border-radius:16px;pointer-events:auto;cursor:pointer;background:rgba(0,0,0,.7);border:2px solid rgba(255,255,255,.16);display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(10px);transition:border-color .2s}
+#itemBox{position:absolute;bottom:14px;right:16px;width:90px;height:90px;border-radius:16px;pointer-events:auto;cursor:pointer;background:rgba(0,0,0,.7);border:2px solid rgba(255,255,255,.16);display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(10px);transition:border-color .2s,transform .1s}
 #itemBox:hover{border-color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.3)}
+#itemBox:active{transform:scale(.93)}
 #itemEmoji{font-size:38px;line-height:1}
 #itemLabel{font-size:8px;letter-spacing:1px;color:rgba(255,255,255,.36);margin-top:2px}
 #useHint{font-size:7px;color:rgba(255,255,255,.2);margin-top:1px}
+
+/* NEW: Track name announce */
+#trackName{position:absolute;top:22%;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:clamp(14px,3vw,28px);font-weight:900;color:#fff;letter-spacing:6px;opacity:0;text-shadow:0 0 30px rgba(255,255,255,.5);transition:opacity .5s;pointer-events:none;text-align:center}
+
 #countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 #cdNum{font-family:'Orbitron',sans-serif;font-size:clamp(90px,18vw,220px);font-weight:900;opacity:0;transform:scale(2.5);transition:opacity .12s,transform .45s cubic-bezier(.2,1.5,.4,1);filter:drop-shadow(0 0 60px currentColor)}
 #cdNum.pop{opacity:1;transform:scale(1)}
@@ -83,26 +247,43 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 #boostFlash{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 100%,rgba(0,255,200,.32),transparent 58%);opacity:0;transition:opacity .08s}
 #speedLines{position:absolute;inset:0;pointer-events:none;opacity:0;background:repeating-linear-gradient(90deg,transparent,transparent 46%,rgba(255,255,255,.04) 50%,transparent 54%)}
 #damageFlash{position:absolute;inset:0;pointer-events:none;background:rgba(255,30,50,.22);opacity:0;transition:opacity .05s}
+
+/* NEW: heal flash */
+#healFlash{position:absolute;inset:0;pointer-events:none;background:rgba(0,255,130,.1);opacity:0;transition:opacity .05s}
+
 #lapFlash{position:fixed;inset:0;background:rgba(255,215,0,.13);pointer-events:none;z-index:55;opacity:0;transition:opacity .07s}
 #driftHUD{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);width:155px;height:36px;background:rgba(0,0,0,.55);border-radius:18px;border:2px solid rgba(255,136,0,.5);overflow:hidden;opacity:0;transition:opacity .18s;display:flex;align-items:center}
 #driftBar{height:100%;width:0%;background:linear-gradient(90deg,#FF8800,#FFD700);transition:width .08s}
 #driftTxt{position:absolute;width:100%;text-align:center;color:#fff;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;pointer-events:none}
 #offroadWarn{position:absolute;top:42%;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:17px;color:#FF2244;text-shadow:0 0 10px #FF2244;opacity:0;transition:opacity .18s;pointer-events:none;letter-spacing:4px}
+
+/* NEW: Rain overlay */
+#rainOverlay{position:fixed;inset:0;pointer-events:none;z-index:48;opacity:0;transition:opacity 2s}
+#rainCanvas{width:100%;height:100%}
+
+/* NEW: Wrong way indicator */
+#wrongWay{position:absolute;top:30%;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;color:#FF2244;text-shadow:0 0 20px #FF2244,0 0 40px #FF2244;opacity:0;transition:opacity .2s;letter-spacing:4px;animation:wrongPulse 0.5s ease-in-out infinite alternate;pointer-events:none}
+@keyframes wrongPulse{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-50%) scale(1.07)}}
+
 #winBanner{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.8);z-index:200;opacity:0;pointer-events:none;transition:opacity .6s;flex-direction:column}
 #winBanner.show{opacity:1;pointer-events:auto}
 #winText{font-family:'Orbitron',sans-serif;font-size:clamp(40px,9vw,108px);font-weight:900;background:linear-gradient(135deg,#FFD700,#FF9900,#FF4400);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 50px rgba(255,200,0,.9));animation:wPulse .7s ease-in-out infinite alternate;text-align:center}
 @keyframes wPulse{from{transform:scale(1)}to{transform:scale(1.07)}}
 #winSub{font-family:'Orbitron',sans-serif;font-size:15px;color:rgba(255,255,255,.55);margin-top:11px;letter-spacing:4px}
+
+/* ── TOUCH CONTROLS ──────────────────────────────────────── */
 #touchCtrl{position:fixed;bottom:0;left:0;right:0;height:190px;display:none;justify-content:space-between;align-items:flex-end;padding:0 12px 12px;pointer-events:none;z-index:60}
 .tpad{pointer-events:auto}
 .dpad{display:grid;grid-template-columns:60px 60px 60px;grid-template-rows:60px 60px;gap:5px}
-.db{display:flex;align-items:center;justify-content:center;font-size:22px;border-radius:14px;cursor:pointer;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);backdrop-filter:blur(8px)}
-.db:active{background:rgba(255,255,255,.28)}
+.db{display:flex;align-items:center;justify-content:center;font-size:22px;border-radius:14px;cursor:pointer;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);backdrop-filter:blur(8px);transition:background .1s}
+.db:active,.db.pressed{background:rgba(255,255,255,.32)}
 .actBtns{display:flex;flex-direction:column;gap:8px;pointer-events:auto}
-.ab{padding:14px 17px;border-radius:14px;border:none;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px}
+.ab{padding:14px 17px;border-radius:14px;border:none;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;transition:transform .1s,opacity .1s}
+.ab:active{transform:scale(.94);opacity:.85}
 .ab-boost{background:linear-gradient(135deg,#003355,#00FFC8);color:#fff}
 .ab-item{background:linear-gradient(135deg,#664400,#FFD700);color:#000}
-/* Results */
+
+/* ── RESULTS ─────────────────────────────────────────────── */
 #resultsScreen{background:radial-gradient(ellipse at 50% -10%,#001840,#000c1a 60%,#000);overflow-y:auto;padding:20px 0}
 .rt-title{font-family:'Orbitron',sans-serif;font-size:clamp(22px,5vw,56px);font-weight:900;margin-bottom:10px}
 .podRow{display:flex;gap:14px;align-items:flex-end;margin:14px 0}
@@ -113,6 +294,8 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 .rtab td{padding:7px 11px;border-bottom:1px solid rgba(255,255,255,.05)}
 .rtab tr.you td{color:var(--neon);font-weight:700}
 .reward{background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.38);border-radius:var(--r);padding:11px 30px;font-family:'Orbitron',sans-serif;font-size:21px;color:var(--gold);margin-bottom:16px}
+
+/* ── SHOP / GARAGE / CHAMP ───────────────────────────────── */
 #shopScreen{overflow-y:auto;padding:75px 0 38px;background:radial-gradient(ellipse at 50% -10%,#001840,#000)}
 .sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:12px;max-width:800px;width:100%;padding:0 18px}
 .si{background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;padding:16px 13px;text-align:center;cursor:pointer;transition:all .2s}
@@ -121,6 +304,7 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 .si h4{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:1px;color:var(--gold);margin-bottom:5px}
 .si p{font-size:11px;color:rgba(255,255,255,.36);margin-bottom:10px;line-height:1.35}
 .si-price{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--neon);font-weight:700}
+
 #garageScreen{background:radial-gradient(ellipse at 50% -10%,#001040,#000)}
 .cg{display:grid;grid-template-columns:repeat(3,minmax(145px,1fr));gap:12px;max-width:540px;width:100%;padding:0 18px}
 .cc{border:1.5px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s}
@@ -132,12 +316,14 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 .spips{display:flex;gap:3px;justify-content:center;margin-top:5px}
 .pip{width:10px;height:5px;border-radius:2px;background:rgba(255,255,255,.1)}
 .pip.on{background:var(--neon)}
+
 #champScreen{background:radial-gradient(ellipse at 50% 0%,#001230,#000)}
 .cug{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:560px;width:100%;padding:0 18px}
 .cuc{border:1.5px solid rgba(255,255,255,.1);border-radius:14px;padding:18px;text-align:center;cursor:pointer;transition:all .2s}
 .cuc:hover:not(.lkd){border-color:rgba(255,215,0,.45);transform:translateY(-3px)}
 .cuc.lkd{opacity:.3;cursor:not-allowed}
 .cuc h3{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);margin-bottom:5px}
+
 #settingsScreen{background:radial-gradient(ellipse at 50% 0%,#001030,#000)}
 .sr{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:400px;margin:7px 0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:12px 18px}
 .sr label{font-size:13px;color:rgba(255,255,255,.58);letter-spacing:1px}
@@ -146,148 +332,68 @@ canvas#gc{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:
 .tog.on{border-color:var(--neon);color:var(--neon);background:rgba(0,255,200,.08)}
 .scr-title{font-family:'Orbitron',sans-serif;font-size:clamp(17px,3vw,34px);font-weight:900;letter-spacing:3px;color:var(--gold);margin-bottom:20px}
 .back-btn{margin-top:20px}
+
+/* ── DAMAGE FLOAT ────────────────────────────────────────── */
 .dmg{position:fixed;font-family:'Orbitron',sans-serif;font-size:21px;font-weight:900;pointer-events:none;z-index:65;animation:fltD 1.2s ease-out forwards}
 @keyframes fltD{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-80px)}}
 .dmg.hit{color:#FF2244;text-shadow:0 0 10px #FF2244}
 .dmg.heal{color:#00FFC8;text-shadow:0 0 10px #00FFC8}
+.dmg.coin{color:#FFD700;text-shadow:0 0 10px #FFD700;font-size:16px}
+
+/* ── PAUSE ───────────────────────────────────────────────── */
 #pauseScreen{background:rgba(0,5,15,.88);backdrop-filter:blur(10px)}
+
+/* ── WHEEL SMOKE (CSS particle) ─────────────────────────── */
+.smoke{position:fixed;pointer-events:none;border-radius:50%;background:rgba(255,255,255,.22);animation:smokeUp 1s ease-out forwards;z-index:45}
+@keyframes smokeUp{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(4) translateY(-30px)}}
+
+/* NEW: Ghost trail effect container */
+#ghostTrail{position:fixed;inset:0;pointer-events:none;z-index:44}
+
+/* NEW: Best lap badge */
+#bestLapBadge{position:absolute;top:74px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#AA7700,#FFD700);border-radius:20px;padding:4px 16px;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:#000;opacity:0;transition:opacity .4s;white-space:nowrap}
 </style>
-</head>
-<body>
-<canvas id="gc"></canvas>
-
-<div id="hud" class="off">
-  <div id="lapWrap"><div id="lapLabel">LAP</div><div id="lapNum">1 / 3</div></div>
-  <div id="raceTimer">0:00</div>
-  <div id="posBadge"><div id="posNum">1</div><div id="posSuffix">ST</div><div id="posOf">of 8</div></div>
-  <div id="coinBadge">🪙 <span id="hudCoins">0</span></div>
-  <div id="statusBars">
-    <div class="sbar"><div class="sbar-label"><span>ARMOR</span><span id="hpPct">100%</span></div><div class="sbar-track"><div class="sbar-fill" id="hpFill" style="width:100%"></div></div></div>
-    <div class="sbar"><div class="sbar-label"><span>BOOST</span><span id="boostPct">100%</span></div><div class="sbar-track"><div class="sbar-fill" id="boostFill" style="width:100%"></div></div></div>
-  </div>
-  <div id="speedoWrap"><canvas id="speedoCanvas" width="188" height="115"></canvas><div id="speedNum">0</div><div id="speedUnit">KM/H</div></div>
-  <div id="mmWrap"><canvas id="mmCanvas" width="160" height="55"></canvas></div>
-  <div id="itemBox" onclick="useItem()"><div id="itemEmoji">❓</div><div id="itemLabel">NO ITEM</div><div id="useHint">[SPACE]</div></div>
-  <div id="countdown"><div id="cdNum" style="color:#FFD700">3</div></div>
-  <div id="notif"></div>
-  <div id="boostFlash"></div>
-  <div id="speedLines"></div>
-  <div id="damageFlash"></div>
-  <div id="lapFlash"></div>
-  <div id="driftHUD"><div id="driftBar"></div><div id="driftTxt">DRIFT BOOST</div></div>
-  <div id="offroadWarn">⚠ OFF ROAD</div>
-</div>
-
-<div id="winBanner">
-  <div id="winText">🏆 YOU WIN!</div>
-  <div id="winSub">RACE FINISHED</div>
-  <button class="mbtn mbtn-gold" style="margin-top:30px" onclick="showResults()">SEE RESULTS →</button>
-</div>
-
-<div class="screen" id="titleScreen">
-  <div id="ts-sun"></div>
-  <div id="ts-ocean"><div class="wv wv1"></div><div class="wv wv2"></div><div class="wv wv3"></div></div>
-  <div id="ts-palms"><span class="tpalm">🌴</span><span class="tpalm">🌴</span></div>
-  <div id="logo">BRU KART RACING</div>
-  <div id="logo-sub">BEACH BUGGY EDITION</div>
-  <div id="logo-tag">BY INEZA AIME BRUNO</div>
-  <button class="mbtn mbtn-gold" onclick="startQuickRace()">🏁 QUICK RACE</button>
-  <button class="mbtn mbtn-gold" onclick="showScreen('champScreen')">🏆 CHAMPIONSHIP</button>
-  <button class="mbtn mbtn-blue" onclick="showScreen('garageScreen')">🚗 GARAGE</button>
-  <button class="mbtn mbtn-teal" onclick="showScreen('shopScreen')">🛒 SHOP</button>
-  <button class="mbtn mbtn-dark" onclick="showScreen('settingsScreen')">⚙️ SETTINGS</button>
-  <div id="creditsLine">INEZA AIME BRUNO • 2025 | ↑↓ Gas/Brake  ←→ Steer  SHIFT Boost  SPACE Item</div>
-</div>
-
-<div class="screen off" id="champScreen">
-  <div class="scr-title">🏆 CHAMPIONSHIP</div>
-  <div class="cug" id="cupGrid"></div>
-  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
-</div>
-<div class="screen off" id="garageScreen">
-  <div class="scr-title">🚗 GARAGE</div>
-  <div class="cg" id="carGrid"></div>
-  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
-</div>
-<div class="screen off" id="shopScreen">
-  <div class="scr-title">🛒 SHOP</div>
-  <p style="color:var(--neon);font-family:'Orbitron',sans-serif;font-size:15px;margin-bottom:18px">🪙 <span id="shopCoins">0</span> COINS</p>
-  <div class="sg" id="shopGrid"></div>
-  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
-</div>
-<div class="screen off" id="settingsScreen">
-  <div class="scr-title">⚙️ SETTINGS</div>
-  <div class="sr"><label>SOUND FX</label><button class="tog on" id="sfxT" onclick="toggleSFX()">ON</button></div>
-  <div class="sr"><label>DIFFICULTY</label><select id="diffSel" onchange="saveSetting('difficulty',this.value)">
-    <option value="easy">EASY</option><option value="medium" selected>MEDIUM</option><option value="hard">HARD</option>
-  </select></div>
-  <div class="sr"><label>RESET PROGRESS</label><button class="mbtn mbtn-red" style="margin:0;padding:7px 18px;min-width:0;font-size:11px" onclick="resetProgress()">RESET</button></div>
-  <button class="mbtn mbtn-red back-btn" onclick="showScreen('titleScreen')">← BACK</button>
-</div>
-<div class="screen off" id="resultsScreen">
-  <div class="rt-title" id="rTitle">🏆 VICTORY!</div>
-  <div class="podRow" id="podiumRow"></div>
-  <div class="reward" id="rewardBadge">+200 🪙</div>
-  <table class="rtab" id="rTable"></table>
-  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
-    <button class="mbtn mbtn-gold" id="nextBtn" onclick="nextRace()" style="display:none">NEXT RACE ▶</button>
-    <button class="mbtn mbtn-blue" onclick="startQuickRace()">🔄 RACE AGAIN</button>
-    <button class="mbtn mbtn-red" onclick="showScreen('titleScreen')">MAIN MENU</button>
-  </div>
-</div>
-<div class="screen off" id="pauseScreen">
-  <div class="scr-title">⏸ PAUSED</div>
-  <button class="mbtn mbtn-gold" onclick="resumeGame()">▶ RESUME</button>
-  <button class="mbtn mbtn-red" style="margin-top:10px" onclick="showScreen('titleScreen')">MAIN MENU</button>
-</div>
-
-<div id="touchCtrl">
-  <div class="tpad dpad">
-    <div></div><div class="db" ontouchstart="td.f=true" ontouchend="td.f=false" ontouchcancel="td.f=false">▲</div><div></div>
-    <div class="db" ontouchstart="td.l=true" ontouchend="td.l=false" ontouchcancel="td.l=false">◄</div>
-    <div class="db" ontouchstart="td.b=true" ontouchend="td.b=false" ontouchcancel="td.b=false">▼</div>
-    <div class="db" ontouchstart="td.r=true" ontouchend="td.r=false" ontouchcancel="td.r=false">►</div>
-  </div>
-  <div class="actBtns">
-    <button class="ab ab-boost" ontouchstart="td.boost=true" ontouchend="td.boost=false">⚡ BOOST</button>
-    <button class="ab ab-item" onclick="useItem()">🎯 ITEM</button>
-  </div>
-</div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  BRU KART RACING — Beach Buggy Edition v2                  ║
-// ║  SMOOTH physics · STRONG AI · Fixed L/R controls           ║
+// ║  BRU KART RACING v3.0 — Beach Buggy Enhanced               ║
+// ║  New: Weather system · Drift combos · Ghost car            ║
+// ║  Challenges · Camera modes · Trick system · Wrong Way      ║
+// ║  Smooth physics · Strong AI · Particle FX                  ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-const gcEl = document.getElementById('gc');
+// Prevent canvas mouse interaction
+const gcEl=document.getElementById('gc');
 gcEl.addEventListener('mousedown',e=>e.preventDefault());
-gcEl.addEventListener('mousemove',e=>e.preventDefault());
 gcEl.addEventListener('contextmenu',e=>e.preventDefault());
 
-const td = {f:false,b:false,l:false,r:false,boost:false};
+const td={f:false,b:false,l:false,r:false,boost:false};
 
 // ── Save ──────────────────────────────────────────────────────
-const SK='brukart_bb_v2';
+const SK='brukart_bb_v3';
 let SD={
   coins:600,selectedCar:0,unlockedCars:[0,1],
   upgrades:{engine:0,handling:0,armor:0,boost:0},
-  settings:{sfx:true,difficulty:'medium'},
-  champ:{c0:0,c1:0,c2:0,c3:0},totalRaces:0
+  settings:{sfx:true,difficulty:'medium',camMode:'chase',shadows:true,weather:true},
+  champ:{c0:0,c1:0,c2:0,c3:0},totalRaces:0,
+  bestLaps:{},totalDrifts:0,totalCoins:0,challenges:{}
 };
 try{const s=localStorage.getItem(SK);if(s)SD=Object.assign(SD,JSON.parse(s));}catch(e){}
 const save=()=>{try{localStorage.setItem(SK,JSON.stringify(SD));}catch(e){}};
 function saveSetting(k,v){SD.settings[k]=v;save();}
 function resetProgress(){if(confirm('Reset ALL progress?')){localStorage.removeItem(SK);location.reload();}}
 function toggleSFX(){SD.settings.sfx=!SD.settings.sfx;const b=document.getElementById('sfxT');b.textContent=SD.settings.sfx?'ON':'OFF';b.className=SD.settings.sfx?'tog on':'tog';save();}
+function toggleShadows(){SD.settings.shadows=!SD.settings.shadows;const b=document.getElementById('shadowT');b.textContent=SD.settings.shadows?'ON':'OFF';b.className=SD.settings.shadows?'tog on':'tog';renderer.shadowMap.enabled=SD.settings.shadows;save();}
+function toggleWeather(){SD.settings.weather=!SD.settings.weather;const b=document.getElementById('weatherT');b.textContent=SD.settings.weather?'ON':'OFF';b.className=SD.settings.weather?'tog on':'tog';save();}
 
 // ── Audio ─────────────────────────────────────────────────────
 let actx;
 const getAC=()=>{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;};
 function tone(f,d=.12,tp='square',v=.18,sw=.5){
   if(!SD.settings.sfx)return;
-  try{const ac=getAC(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type=tp;o.frequency.setValueAtTime(f,ac.currentTime);o.frequency.exponentialRampToValueAtTime(f*sw,ac.currentTime+d);g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.start();o.stop(ac.currentTime+d);}catch(e){}
+  try{const ac=getAC(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);
+  o.type=tp;o.frequency.setValueAtTime(f,ac.currentTime);o.frequency.exponentialRampToValueAtTime(f*sw,ac.currentTime+d);
+  g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.start();o.stop(ac.currentTime+d);}catch(e){}
 }
 const sfx={
   boost:  ()=>tone(320,.2,'sawtooth',.28,1.6),
@@ -297,7 +403,9 @@ const sfx={
   explode:()=>tone(80,.4,'sawtooth',.45,.2),
   lap:    ()=>[700,900,1200].forEach((f,i)=>setTimeout(()=>tone(f,.2,'sine',.32,1.05),i*120)),
   victory:()=>[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>tone(f,.25,'sine',.4,1.05),i*150)),
-  count:  n=>tone(n===0?1200:520,.35,'sine',.4,1.05)
+  count:  n=>tone(n===0?1200:520,.35,'sine',.4,1.05),
+  coin:   ()=>tone(880,.08,'sine',.15,1.2),
+  trick:  ()=>{tone(440,.15,'sine',.3,1.5);setTimeout(()=>tone(660,.15,'sine',.3,1.5),80);setTimeout(()=>tone(880,.2,'sine',.3,1.5),160);}
 };
 
 // ── Car Definitions ───────────────────────────────────────────
@@ -314,14 +422,17 @@ const CARS=[
 
 const POWERUPS=[
   {id:'fireball',name:'Fireball',e:'🔥'},
-  {id:'homing',name:'Homing Orb',e:'🎯'},
-  {id:'thunder',name:'Thunder',e:'⚡'},
-  {id:'banana',name:'Banana',e:'🍌'},
-  {id:'shield',name:'Shield',e:'🛡️'},
-  {id:'repair',name:'Repair',e:'💊'},
-  {id:'nitro',name:'Nitro',e:'🚀'},
-  {id:'freeze',name:'Freeze',e:'❄️'},
-  {id:'magnet',name:'Magnet',e:'🧲'}
+  {id:'homing',  name:'Homing Orb',e:'🎯'},
+  {id:'thunder', name:'Thunder',e:'⚡'},
+  {id:'banana',  name:'Banana',e:'🍌'},
+  {id:'shield',  name:'Shield',e:'🛡️'},
+  {id:'repair',  name:'Repair',e:'💊'},
+  {id:'nitro',   name:'Nitro',e:'🚀'},
+  {id:'freeze',  name:'Freeze',e:'❄️'},
+  {id:'magnet',  name:'Magnet',e:'🧲'},
+  {id:'triple',  name:'Triple Fire',e:'🔱'},  // NEW
+  {id:'swap',    name:'Swap',e:'🌀'},          // NEW
+  {id:'oil',     name:'Oil Slick',e:'🛢️'},    // NEW
 ];
 
 const CUPS=[
@@ -332,11 +443,67 @@ const CUPS=[
 ];
 
 const THEMES=[
-  {name:'Sunny Beach',sky:0x55AAEE,ground:0xF4D060,road:0xDDD8B0,road2:0xC8C4A0,fog:0x9EDBF5,side:'beach'},
-  {name:'Jungle',    sky:0x1A4A1A,ground:0x3D6B2A,road:0x8A7A6A,road2:0x7A6A5A,fog:0x2D6030,side:'jungle'},
-  {name:'Desert',    sky:0xFF9A20,ground:0xD4A264,road:0xD4C4A0,road2:0xC4B490,fog:0xFFAA55,side:'desert'},
-  {name:'Arena',     sky:0x000022,ground:0x111133,road:0x222244,road2:0x1A1A38,fog:0x000033,side:'arena'}
+  {name:'Sunny Beach',  sky:0x55AAEE,ground:0xF4D060,road:0xDDD8B0,road2:0xC8C4A0,fog:0x9EDBF5,side:'beach', weather:['sunny','cloudy','windy']},
+  {name:'Jungle',       sky:0x1A4A1A,ground:0x3D6B2A,road:0x8A7A6A,road2:0x7A6A5A,fog:0x2D6030,side:'jungle',weather:['rain','thunderstorm','humid']},
+  {name:'Desert',       sky:0xFF9A20,ground:0xD4A264,road:0xD4C4A0,road2:0xC4B490,fog:0xFFAA55,side:'desert',weather:['sunny','sandstorm','hot']},
+  {name:'Arena',        sky:0x000022,ground:0x111133,road:0x222244,road2:0x1A1A38,fog:0x000033,side:'arena', weather:['clear','neon','electric']}
 ];
+
+// NEW: Weather system
+const WEATHERS={
+  sunny:    {label:'☀️ SUNNY',    rain:0,fogDensity:.0028,speedMod:1.0,   gripMod:1.0},
+  cloudy:   {label:'☁️ CLOUDY',   rain:0,fogDensity:.004, speedMod:0.98,  gripMod:0.98},
+  rain:     {label:'🌧️ RAIN',     rain:1,fogDensity:.006, speedMod:0.88,  gripMod:0.80},
+  thunderstorm:{label:'⛈️ STORM', rain:2,fogDensity:.008, speedMod:0.82,  gripMod:0.72},
+  windy:    {label:'💨 WINDY',    rain:0,fogDensity:.003, speedMod:0.92,  gripMod:0.95},
+  sandstorm:{label:'🏜️ SANDSTORM',rain:0,fogDensity:.009,speedMod:0.85,  gripMod:0.88},
+  hot:      {label:'🔥 HOT',      rain:0,fogDensity:.003, speedMod:1.05,  gripMod:0.92},
+  clear:    {label:'✨ CLEAR',    rain:0,fogDensity:.002, speedMod:1.0,   gripMod:1.0},
+  neon:     {label:'💫 NEON',     rain:0,fogDensity:.003, speedMod:1.02,  gripMod:1.0},
+  electric: {label:'⚡ ELECTRIC', rain:1,fogDensity:.005, speedMod:0.95,  gripMod:0.90},
+  humid:    {label:'🌫️ HUMID',    rain:0,fogDensity:.007, speedMod:0.93,  gripMod:0.95},
+};
+
+// NEW: Daily challenges
+const CHALLENGE_DEFS=[
+  {id:'drift100',  name:'Drift Master',  desc:'Drift 100m in one race',   reward:200,goal:'driftDist',   target:100},
+  {id:'combo5',    name:'Combo King',    desc:'Reach 5x drift combo',     reward:150,goal:'maxCombo',    target:5},
+  {id:'1stplace',  name:'Gold Finish',   desc:'Finish 1st place',         reward:300,goal:'finishPos',   target:1},
+  {id:'nohit',     name:'Clean Racer',   desc:'Finish race without being hit',reward:250,goal:'noHit',   target:1},
+  {id:'boost10',   name:'Boost Fanatic', desc:'Use boost 10 times',       reward:120,goal:'boostCount',  target:10},
+  {id:'coins50',   name:'Coin Collector',desc:'Collect 50 coins in race', reward:180,goal:'raceCoins',   target:50},
+];
+
+let currentWeather='sunny',weatherData=WEATHERS.sunny;
+let rainParticles=[];
+
+// NEW: Rain system
+const rainCv=document.getElementById('rainCanvas');
+const rainCtx=rainCv.getContext('2d');
+function resizeRain(){rainCv.width=innerWidth;rainCv.height=innerHeight;}
+window.addEventListener('resize',resizeRain);resizeRain();
+function initRain(intensity){
+  rainParticles=[];
+  const count=intensity===2?300:150;
+  for(let i=0;i<count;i++){
+    rainParticles.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,spd:8+Math.random()*6,len:12+Math.random()*14,angle:intensity===2?0.3:0.15});
+  }
+}
+function drawRain(dt){
+  rainCtx.clearRect(0,0,rainCv.width,rainCv.height);
+  if(!rainParticles.length)return;
+  rainCtx.strokeStyle=weatherData.rain===2?'rgba(200,200,255,.55)':'rgba(180,200,255,.35)';
+  rainCtx.lineWidth=1;
+  rainParticles.forEach(p=>{
+    rainCtx.beginPath();
+    rainCtx.moveTo(p.x,p.y);
+    rainCtx.lineTo(p.x+p.len*p.angle,p.y+p.len);
+    rainCtx.stroke();
+    p.y+=p.spd*dt*60;
+    p.x+=p.spd*p.angle*dt*60;
+    if(p.y>innerHeight){p.y=0;p.x=Math.random()*innerWidth;}
+  });
+}
 
 const ROAD_LEN=2200,ROAD_W=28,FULL_W=ROAD_W*2,NUM_LANES=8,LANE_W=FULL_W/NUM_LANES;
 const MAX_DRIFT=100;
@@ -351,22 +518,22 @@ renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.12;
 renderer.setSize(innerWidth,innerHeight);
-window.addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
-});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,1800);
 
 // ── Game state ─────────────────────────────────────────────────
 let gState='menu',themeIdx=0,cupIdx=-1,raceInCup=0;
-let raceTime=0,coinsEarned=0;
+let raceTime=0,lapStartTime=0,bestLapTime=Infinity,lastLapTime=0;
+let coinsEarned=0;
 let racers=[],playerR=null;
-let pickups=[],boostPads=[],bananas=[],projectiles=[],fxList=[];
+let pickups=[],boostPads=[],bananas=[],oilSlicks=[],projectiles=[],fxList=[];
 let shakeAmt=0,notifTimer=0;
 let paused=false,offroadTimer=0;
+
+// NEW: Race stats for challenges
+let raceStats={driftDist:0,maxCombo:0,finishPos:8,noHit:true,boostCount:0,raceCoins:0};
 
 // ── Car Mesh ──────────────────────────────────────────────────
 function buildCarMesh(def){
@@ -381,85 +548,78 @@ function buildCarMesh(def){
   const mHL=new THREE.MeshPhongMaterial({color:0xFFFFAA,emissive:0xFFFF00,emissiveIntensity:.9});
   const mTL=new THREE.MeshPhongMaterial({color:0xFF2200,emissive:0xFF1100,emissiveIntensity:.9});
 
-  const body=new THREE.Mesh(new THREE.BoxGeometry(2,.65,3.8),mB);
-  body.position.y=.5;g.add(body);
-  const cab=new THREE.Mesh(new THREE.BoxGeometry(1.72,.52,2.0),mB2);
-  cab.position.set(0,1.12,-.05);g.add(cab);
-  const wF=new THREE.Mesh(new THREE.BoxGeometry(1.56,.06,1.05),mG);
-  wF.position.set(0,1.3,.88);wF.rotation.x=.42;g.add(wF);
-  const wR=new THREE.Mesh(new THREE.BoxGeometry(1.56,.06,.9),mG);
-  wR.position.set(0,1.24,-.82);wR.rotation.x=-.44;g.add(wR);
-  const fb=new THREE.Mesh(new THREE.BoxGeometry(2.12,.28,.14),mC);
-  fb.position.set(0,.62,1.97);g.add(fb);
-  const rb=new THREE.Mesh(new THREE.BoxGeometry(2,.22,.14),mD);
-  rb.position.set(0,.58,-1.97);g.add(rb);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(2,.65,3.8),mB);body.position.y=.5;g.add(body);
+  const cab=new THREE.Mesh(new THREE.BoxGeometry(1.72,.52,2.0),mB2);cab.position.set(0,1.12,-.05);g.add(cab);
+  const wF=new THREE.Mesh(new THREE.BoxGeometry(1.56,.06,1.05),mG);wF.position.set(0,1.3,.88);wF.rotation.x=.42;g.add(wF);
+  const wR=new THREE.Mesh(new THREE.BoxGeometry(1.56,.06,.9),mG);wR.position.set(0,1.24,-.82);wR.rotation.x=-.44;g.add(wR);
+  const fb=new THREE.Mesh(new THREE.BoxGeometry(2.12,.28,.14),mC);fb.position.set(0,.62,1.97);g.add(fb);
+  const rb=new THREE.Mesh(new THREE.BoxGeometry(2,.22,.14),mD);rb.position.set(0,.58,-1.97);g.add(rb);
   [-1.02,1.02].forEach(x=>{const s=new THREE.Mesh(new THREE.BoxGeometry(.05,.32,2.55),mB2);s.position.set(x,.68,0);g.add(s);});
   const hlL=new THREE.Mesh(new THREE.BoxGeometry(.38,.18,.08),mHL);hlL.position.set(-.74,.66,1.95);g.add(hlL);
   const hlR=hlL.clone();hlR.position.set(.74,.66,1.95);g.add(hlR);
   const tlL=new THREE.Mesh(new THREE.BoxGeometry(.3,.14,.07),mTL);tlL.position.set(-.72,.63,-1.95);g.add(tlL);
   const tlR=tlL.clone();tlR.position.set(.72,.63,-1.95);g.add(tlR);
-  const ex=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,.48,8),mC);
-  ex.rotation.x=Math.PI/2;ex.position.set(-.65,.46,-1.96);g.add(ex);
-  const ant=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.55,4),mD);
-  ant.position.set(-.62,1.72,-.05);g.add(ant);
+  const ex=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,.48,8),mC);ex.rotation.x=Math.PI/2;ex.position.set(-.65,.46,-1.96);g.add(ex);
+  const ant=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.55,4),mD);ant.position.set(-.62,1.72,-.05);g.add(ant);
   if(def.boss||def.final){
     const s1=new THREE.Mesh(new THREE.BoxGeometry(.1,.48,.1),mC);s1.position.set(-.7,.9,-1.97);g.add(s1);
     const s2=s1.clone();s2.position.set(.7,.9,-1.97);g.add(s2);
     const wing=new THREE.Mesh(new THREE.BoxGeometry(2.1,.08,.5),mB);wing.position.set(0,1.16,-1.97);g.add(wing);
   }
   const wheels=[];
-  const wPos=[[-1.18,.46,1.28],[1.18,.46,1.28],[-1.18,.46,-1.28],[1.18,.46,-1.28]];
-  wPos.forEach(([wx,wy,wz])=>{
+  [[- 1.18,.46,1.28],[1.18,.46,1.28],[-1.18,.46,-1.28],[1.18,.46,-1.28]].forEach(([wx,wy,wz])=>{
     const wg=new THREE.Group();
-    const tyre=new THREE.Mesh(new THREE.CylinderGeometry(.46,.46,.38,14),mT);
-    tyre.rotation.z=Math.PI/2;wg.add(tyre);
-    const rim=new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,.4,6),mR);
-    rim.rotation.z=Math.PI/2;wg.add(rim);
+    const tyre=new THREE.Mesh(new THREE.CylinderGeometry(.46,.46,.38,14),mT);tyre.rotation.z=Math.PI/2;wg.add(tyre);
+    const rim=new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,.4,6),mR);rim.rotation.z=Math.PI/2;wg.add(rim);
     for(let i=0;i<5;i++){
       const a=(i/5)*Math.PI*2;
       const sp=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.42,4),mD);
-      sp.rotation.z=Math.PI/2;sp.position.set(Math.cos(a)*.12,Math.sin(a)*.12,0);
-      wg.add(sp);
+      sp.rotation.z=Math.PI/2;sp.position.set(Math.cos(a)*.12,Math.sin(a)*.12,0);wg.add(sp);
     }
     wg.position.set(wx,wy,wz);g.add(wg);wheels.push(wg);
   });
   g.userData.wheels=wheels;
-  g.traverse(c=>{if(c.isMesh)c.castShadow=true;});
+  g.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
   return g;
 }
 
 // ── Road Generator ────────────────────────────────────────────
 function generateRoad(T){
   while(scene.children.length>0)scene.remove(scene.children[0]);
-  pickups=[];boostPads=[];bananas=[];projectiles=[];fxList=[];
+  pickups=[];boostPads=[];bananas=[];oilSlicks=[];projectiles=[];fxList=[];
 
   scene.background=new THREE.Color(T.sky);
-  scene.fog=new THREE.FogExp2(T.fog,.0028);
+  scene.fog=new THREE.FogExp2(T.fog,weatherData.fogDensity);
 
   scene.add(new THREE.AmbientLight(0xFFFFFF,.55));
   const sun=new THREE.DirectionalLight(0xFFF8E0,1.5);
-  sun.position.set(60,130,80);sun.castShadow=true;
+  sun.position.set(60,130,80);sun.castShadow=SD.settings.shadows;
   sun.shadow.mapSize.set(2048,2048);
   sun.shadow.camera.left=-300;sun.shadow.camera.right=300;
   sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;
   sun.shadow.camera.far=700;sun.shadow.bias=-.001;
   scene.add(sun);
   scene.add(new THREE.HemisphereLight(T.sky,T.ground,.4));
-
   if(T.side==='arena'){
     [0xFF2244,0x2244FF,0xFFD700,0x00FF88].forEach((c,i)=>{
       const lp=new THREE.PointLight(c,1.8,100);
-      lp.position.set(Math.cos(i/4*Math.PI*2)*80,40,ROAD_LEN/2+Math.sin(i/4*Math.PI*2)*80);
-      scene.add(lp);
+      lp.position.set(Math.cos(i/4*Math.PI*2)*80,40,ROAD_LEN/2+Math.sin(i/4*Math.PI*2)*80);scene.add(lp);
     });
+  }
+  if(currentWeather==='neon'||currentWeather==='electric'){
+    const nl=new THREE.PointLight(0x00FFC8,2.5,200);nl.position.set(0,50,ROAD_LEN/2);scene.add(nl);
+    const nl2=new THREE.PointLight(0xFF44FF,2,200);nl2.position.set(0,40,ROAD_LEN/2);scene.add(nl2);
   }
 
   const gnd=new THREE.Mesh(new THREE.PlaneGeometry(ROAD_LEN+800,400),new THREE.MeshPhongMaterial({color:T.ground,shininess:3}));
   gnd.rotation.x=-Math.PI/2;gnd.position.set(0,0,ROAD_LEN/2);gnd.receiveShadow=true;scene.add(gnd);
 
-  const road=new THREE.Mesh(new THREE.PlaneGeometry(FULL_W,ROAD_LEN),new THREE.MeshPhongMaterial({color:T.road,shininess:26,specular:0x222222}));
+  // Road with wet effect when raining
+  const roadCol=weatherData.rain>0?new THREE.Color(T.road).multiplyScalar(.8):new THREE.Color(T.road);
+  const road=new THREE.Mesh(new THREE.PlaneGeometry(FULL_W,ROAD_LEN),new THREE.MeshPhongMaterial({color:roadCol,shininess:weatherData.rain>0?80:26,specular:weatherData.rain>0?new THREE.Color(0x888888):new THREE.Color(0x222222)}));
   road.rotation.x=-Math.PI/2;road.position.set(0,.02,ROAD_LEN/2);road.receiveShadow=true;scene.add(road);
 
+  // Lane markers
   const dashMat=new THREE.MeshPhongMaterial({color:0xFFFFFF,emissive:0xFFFFFF,emissiveIntensity:.1});
   const dLen=ROAD_LEN/80;
   for(let lane=1;lane<NUM_LANES;lane++){
@@ -470,23 +630,20 @@ function generateRoad(T){
       dash.rotation.x=-Math.PI/2;dash.position.set(lx,.04,lz);scene.add(dash);
     }
   }
-
   const edgeMat=new THREE.MeshPhongMaterial({color:0xFFFFFF,emissive:0xFFFFFF,emissiveIntensity:.2});
   [-1,1].forEach(s=>{
     const e=new THREE.Mesh(new THREE.PlaneGeometry(.55,ROAD_LEN),edgeMat);
     e.rotation.x=-Math.PI/2;e.position.set(s*(ROAD_W-.28),.04,ROAD_LEN/2);scene.add(e);
   });
-
   const nK=90,kLen=ROAD_LEN/nK;
   for(let i=0;i<nK;i++){
     const kz=i*kLen+kLen/2;
     [-1,1].forEach(s=>{
       const km=new THREE.MeshPhongMaterial({color:i%2===0?0xFF2244:0xFFFFFF});
-      const k=new THREE.Mesh(new THREE.BoxGeometry(1.8,.18,kLen),km);
-      k.position.set(s*(ROAD_W+.9),.09,kz);scene.add(k);
+      const k=new THREE.Mesh(new THREE.BoxGeometry(1.8,.18,kLen),km);k.position.set(s*(ROAD_W+.9),.09,kz);scene.add(k);
     });
   }
-
+  // Barriers
   const bMat=new THREE.MeshPhongMaterial({color:0xCCCCCC,shininess:22});
   const segW=8;const numSeg=Math.floor(ROAD_LEN/segW);
   [-1,1].forEach(s=>{
@@ -499,15 +656,23 @@ function generateRoad(T){
     }
   });
 
+  // Boost pads
   for(let bz=200;bz<ROAD_LEN-150;bz+=200){
     const lx=(Math.floor(Math.random()*NUM_LANES)+.5)*LANE_W-ROAD_W;
     const pMat=new THREE.MeshPhongMaterial({color:0x00FFC8,emissive:0x00AA88,emissiveIntensity:.85,transparent:true,opacity:.88});
     const pad=new THREE.Mesh(new THREE.PlaneGeometry(LANE_W*.88,5.5),pMat);
     pad.rotation.x=-Math.PI/2;pad.position.set(lx,.06,bz);scene.add(pad);
     const pl=new THREE.PointLight(0x00FFC8,.5,9);pl.position.set(lx,1,bz);scene.add(pl);
+    // Arrows on boost pad
+    for(let ai=0;ai<3;ai++){
+      const arrowMat=new THREE.MeshPhongMaterial({color:0xFFFFFF,emissive:0xFFFFFF,emissiveIntensity:.6});
+      const arrow=new THREE.Mesh(new THREE.BoxGeometry(.3,0.01,1.2),arrowMat);
+      arrow.position.set(lx,0.07,bz-1+ai*1.2);scene.add(arrow);
+    }
     boostPads.push({x:lx,z:bz,mesh:pad,light:pl});
   }
 
+  // Pickups
   for(let pz=150;pz<ROAD_LEN-150;pz+=140){
     const lx=(Math.floor(Math.random()*NUM_LANES)+.5)*LANE_W-ROAD_W;
     const bg=new THREE.Group();
@@ -518,6 +683,19 @@ function generateRoad(T){
     const bpl=new THREE.PointLight(0xFFD700,.45,5.5);bg.add(bpl);
     bg.position.set(lx,1.75,pz);scene.add(bg);
     pickups.push({mesh:bg,x:lx,z:pz,active:true,respawnT:0});
+  }
+
+  // NEW: Coin pickups
+  for(let cz=80;cz<ROAD_LEN-80;cz+=60){
+    if(Math.random()<0.4){
+      const lx=(Math.floor(Math.random()*NUM_LANES)+.5)*LANE_W-ROAD_W;
+      const coinG=new THREE.Group();
+      const coinM=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.1,12),new THREE.MeshPhongMaterial({color:0xFFD700,emissive:0x886600,emissiveIntensity:.7,shininess:200}));
+      coinM.rotation.x=Math.PI/2;coinG.add(coinM);
+      const cl=new THREE.PointLight(0xFFD700,.3,4);coinG.add(cl);
+      coinG.position.set(lx,1,cz);scene.add(coinG);
+      pickups.push({mesh:coinG,x:lx,z:cz,active:true,respawnT:0,isCoin:true,value:5});
+    }
   }
 
   buildFinishArch(ROAD_LEN-20);
@@ -542,7 +720,6 @@ function buildFinishArch(fz){
   const al2=new THREE.PointLight(0xFF2244,2.2,28);al2.position.set(ROAD_W,14,fz);scene.add(al2);
   const al3=new THREE.PointLight(0xFFD700,2.5,35);al3.position.set(0,16,fz);scene.add(al3);
 }
-
 function buildStartLine(sz){
   const sl=new THREE.Mesh(new THREE.PlaneGeometry(FULL_W,3.5),new THREE.MeshPhongMaterial({color:0xFFFFFF,emissive:0xFFFFFF,emissiveIntensity:.18}));
   sl.rotation.x=-Math.PI/2;sl.position.set(0,.05,sz);scene.add(sl);
@@ -551,7 +728,6 @@ function buildStartLine(sz){
     sq.rotation.x=-Math.PI/2;sq.position.set((c/8)*FULL_W-ROAD_W+FULL_W/16,.06,sz);scene.add(sq);
   }
 }
-
 function buildScenery(T){
   const sp=55;
   for(let z=0;z<=ROAD_LEN+sp;z+=sp){
@@ -567,6 +743,7 @@ function buildScenery(T){
       if(obj){obj.castShadow=true;scene.add(obj);}
     });
   }
+  // Spectators
   const cCols=[0xFF6688,0xFFAA44,0x44CCFF,0xAA44FF,0x44FF88,0xFF8844];
   for(let z=60;z<ROAD_LEN-60;z+=28){
     [-(ROAD_W+16),ROAD_W+16].forEach(x=>{
@@ -577,12 +754,17 @@ function buildScenery(T){
       head.position.y=1.65;cg.add(head);
       const arm=new THREE.Mesh(new THREE.BoxGeometry(.12,.55,.12),new THREE.MeshPhongMaterial({color:0xFFD0A0}));
       arm.position.set(.38,1.5+Math.random()*.3,0);arm.rotation.z=-Math.PI/4+Math.random()*.25;cg.add(arm);
+      // Animate spectators
+      cg.userData.baseY=0;cg.userData.waveOffset=Math.random()*Math.PI*2;
       cg.position.set(x,0,z);scene.add(cg);
+      fxList.push({type:'spectator',mesh:cg});
     });
   }
+  // Beach ocean
   if(T.side==='beach'){
     const oc=new THREE.Mesh(new THREE.PlaneGeometry(120,ROAD_LEN+200),new THREE.MeshPhongMaterial({color:0x0088BB,transparent:true,opacity:.7,shininess:200,specular:0x88CCFF}));
     oc.rotation.x=-Math.PI/2;oc.position.set(-(ROAD_W+80),-.5,ROAD_LEN/2);scene.add(oc);
+    // Clouds
     for(let i=0;i<14;i++){
       const cg=new THREE.Group();
       for(let j=0;j<5;j++){
@@ -593,6 +775,7 @@ function buildScenery(T){
       cg.userData.vx=(Math.random()<.5?1:-1)*(3+Math.random()*3);
       fxList.push({type:'cloud',mesh:cg});scene.add(cg);
     }
+    // Hot air balloon
     const bal=new THREE.Group();
     const env=new THREE.Mesh(new THREE.SphereGeometry(9.5,12,12),new THREE.MeshPhongMaterial({color:0xFF8800}));
     env.position.y=18;bal.add(env);
@@ -619,31 +802,19 @@ function mkCactus(x,y,z){const g=new THREE.Group();const mat=new THREE.MeshPhong
 function mkRock(x,y,z){const g=new THREE.Group();const s=1.2+Math.random()*2;const r=new THREE.Mesh(new THREE.BoxGeometry(s*1.7,.9*s,s*1.2),new THREE.MeshPhongMaterial({color:0xA08040,shininess:3}));r.rotation.y=Math.random()*Math.PI;r.position.y=s*.45;g.add(r);g.position.set(x,y,z);return g;}
 function mkPillar(x,y,z){const g=new THREE.Group();const p=new THREE.Mesh(new THREE.CylinderGeometry(.6,.95,12,9),new THREE.MeshPhongMaterial({color:0x1A1A3A,shininess:65}));p.position.y=6;g.add(p);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.2,.15,9,20),new THREE.MeshPhongMaterial({color:0x4466FF,emissive:0x2244CC,emissiveIntensity:1.2}));ring.position.y=12.3;g.add(ring);g.position.set(x,y,z);return g;}
 
-// ╔══════════════════════════════════════════════════════════════╗
-// ║  RACER CLASS — Smooth physics rewrite                      ║
-// ║  Key improvements:                                          ║
-// ║  · Smooth exponential velocity interpolation               ║
-// ║  · Proper lateral movement on LEFT/RIGHT keys              ║
-// ║  · No sudden jerking — all forces gradually applied        ║
-// ║  · Strong AI with rubber-banding and awareness             ║
-// ╚══════════════════════════════════════════════════════════════╝
+// ── RACER CLASS ───────────────────────────────────────────────
 class Racer{
   constructor(cidx,isP,startZ,lane,name){
     this.cidx=cidx;this.def=CARS[cidx];this.isP=isP;this.name=name||this.def.name;
     this.z=startZ;
     this.x=(lane+.5)*LANE_W-ROAD_W;
     this.targetX=this.x;
-    this.vz=0;   // forward velocity (smooth)
-    this.vx=0;   // lateral velocity (smooth)
-
-    // Smooth velocity targets — we lerp toward these
-    this.vzTarget=0;
-    this.vxTarget=0;
+    this.vz=0;this.vx=0;
 
     this.lap=1;this.rPos=1;this.finished=false;this.finishTime=0;
+    this.lapTimes=[];this.currentLapStart=0;
 
     const up=isP?SD.upgrades:{engine:0,handling:0,armor:0,boost:0};
-    // Base speed scaled for smooth feel
     this.maxSpd=(this.def.spd+up.engine)*1.6+10;
     this.accRate=(this.def.acc+up.engine)*0.22;
     this.hdl=(this.def.hdl+up.handling)*0.30;
@@ -659,25 +830,27 @@ class Racer{
     this.magnetT=0;this.aiItemCD=0;
     this.isBoosting=false;
 
-    // Visual interpolation — smooth lean and steer
-    this.leanAngle=0;
-    this.steerAngle=0;
-    this.visualYaw=0;  // smooth yaw for drift effect
+    this.leanAngle=0;this.steerAngle=0;this.visualYaw=0;
     this.drifting=false;this.driftAngle=0;this.driftCharge=0;
 
+    // NEW: Drift combo system
+    this.driftCombo=0;this.comboTimer=0;this.comboMult=1;
+    this.totalDriftDist=0;
+
+    // NEW: Trick system
+    this.trickT=0;this.inAir=false;this.airTime=0;
+    this.boostCount=0;
+
+    // NEW: Wrong way detection
+    this.prevZ=startZ;
+    this.wrongWayTimer=0;
+
     // AI state
-    this.aiTimer=0;
-    this.aiLaneTimer=0;
-    this.aiReactionDelay=0;
-    this.personality={
-      aggression:Math.random()*.7+.45,
-      bravery:Math.random()*.8+.3,
-      driftSkill:Math.random()*.7+.3,
-      skill:Math.random()*.5+.5  // overall skill 0.5-1.0
-    };
+    this.aiTimer=0;this.aiLaneTimer=0;
+    this.personality={aggression:Math.random()*.7+.45,bravery:Math.random()*.8+.3,driftSkill:Math.random()*.7+.3,skill:Math.random()*.5+.5};
 
     this.mesh=buildCarMesh(this.def);
-    this._shield();this._shadow();
+    this._shield();this._shadow();this._skidTrails();
     this.mesh.position.set(this.x,.6,this.z);
     this.mesh.rotation.y=0;
     scene.add(this.mesh);
@@ -693,19 +866,19 @@ class Racer{
   }
   _shadow(){
     this.shadowMesh=new THREE.Mesh(new THREE.CircleGeometry(1.4,16),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.28}));
-    this.shadowMesh.rotation.x=-Math.PI/2;
-    scene.add(this.shadowMesh);
+    this.shadowMesh.rotation.x=-Math.PI/2;scene.add(this.shadowMesh);
+  }
+  _skidTrails(){
+    // NEW: Skid mark geometry for drift effect
+    this.skidPoints=[];this.skidLines=[];
   }
 
   syncMesh(){
     this.mesh.position.set(this.x,.6,this.z);
-    // Smooth lean
     this.mesh.rotation.z=this.leanAngle;
-    // Smooth yaw from drift
     this.mesh.rotation.y=this.visualYaw;
     this.shadowMesh.position.set(this.x,.025,this.z);
     if(this.shieldMesh.visible)this.shieldMesh.rotation.y+=.035;
-    // Wheel roll & steer
     const ws=this.mesh.userData.wheels;
     if(ws){
       const rollDelta=this.vz*0.055;
@@ -718,7 +891,7 @@ class Racer{
   update(dt,inp){
     if(this.finished){this.syncMesh();return;}
 
-    // ── Status timers ─────────────────────────────────────────
+    // Status timers
     if(this.shieldT>0){this.shieldT-=dt;if(this.shieldT<=0){this.shield=false;this.shieldMesh.visible=false;}}
     if(this.invT>0){this.invT-=dt;if(this.invT<=0)this.inv=false;}
     if(this.slowT>0){this.slowT-=dt;if(this.slowT<=0)this.slowed=false;}
@@ -730,28 +903,40 @@ class Racer{
     const sM=this.slowed?0.35:1;
     const onRoad=this.x>-ROAD_W&&this.x<ROAD_W;
     const offRoadFactor=onRoad?1:0.60;
+    const gripMod=weatherData.gripMod*(onRoad?1:0.8);
 
     if(!onRoad&&this.isP){
-      document.getElementById('offroadWarn').style.opacity='1';
-      offroadTimer=0.3;
+      document.getElementById('offroadWarn').style.opacity='1';offroadTimer=0.3;
+    }
+
+    // NEW: Wrong way detection
+    if(this.isP){
+      const dzActual=this.z-this.prevZ;
+      if(dzActual<-2&&this.vz<-0.5){
+        this.wrongWayTimer+=dt;
+        document.getElementById('wrongWay').style.opacity=this.wrongWayTimer>0.5?'1':'0';
+      } else {
+        this.wrongWayTimer=0;document.getElementById('wrongWay').style.opacity='0';
+      }
+      this.prevZ=this.z;
     }
 
     if(this.isP){
-      this._updatePlayer(dt,inp,sM,onRoad,offRoadFactor);
+      this._updatePlayer(dt,inp,sM,onRoad,offRoadFactor,gripMod);
     } else {
       this._updateAI(dt,sM,onRoad,offRoadFactor);
     }
 
-    // ── Move ──────────────────────────────────────────────────
+    // Move
     this.z+=this.vz*dt;
     this.x+=this.vx*dt;
 
-    // Clamp X — soft wall bounce
+    // Soft wall bounce
     const xLimit=ROAD_W+1.8;
     if(this.x<-xLimit){this.x=-xLimit;this.vx=Math.abs(this.vx)*0.35;}
     if(this.x> xLimit){this.x= xLimit;this.vx=-Math.abs(this.vx)*0.35;}
 
-    // Car-car collision (gentle push, no harsh jerks)
+    // Car-car collision
     racers.forEach(r=>{
       if(r===this||r.finished)return;
       const dz=r.z-this.z,dx=r.x-this.x;
@@ -760,13 +945,9 @@ class Racer{
         const push=(3.8-dist)/3.8*0.6;
         const nx=dx/dist,nz=dz/dist;
         this.x-=nx*push*0.8;r.x+=nx*push*0.8;
-        // Gentle speed reduction on collision
         const relVz=this.vz-r.vz;
-        if(relVz>0){
-          const impulse=relVz*0.18;
-          this.vz-=impulse;r.vz+=impulse*0.5;
-        }
-        if(this.isP&&dist<3.2){shakeAmt=0.25;this.takeDmg(3);}
+        if(relVz>0){const impulse=relVz*0.18;this.vz-=impulse;r.vz+=impulse*0.5;}
+        if(this.isP&&dist<3.2){shakeAmt=0.25;this.takeDmg(3);if(!raceStats.noHit){}else{raceStats.noHit=false;}}
       }
     });
 
@@ -774,36 +955,79 @@ class Racer{
     boostPads.forEach(bp=>{
       if(Math.abs(this.z-bp.z)<4.5&&Math.abs(this.x-bp.x)<LANE_W*.7){
         this.vz=Math.min(this.maxSpd*2.2,this.vz+10);
-        if(this.isP){showNotif('⚡ BOOST PAD!','#00FFC8');sfx.boost();}
+        if(this.isP){showNotif('⚡ BOOST PAD!','#00FFC8');sfx.boost();raceStats.boostCount++;}
       }
     });
 
-    // Pickup check
+    // Pickups
     pickups.forEach(pk=>{
-      if(pk.active&&!this.item&&Math.abs(this.z-pk.z)<3.2&&Math.abs(this.x-pk.x)<3.2){
-        const pu=POWERUPS[Math.floor(Math.random()*POWERUPS.length)];
-        this.item=pu;
-        if(this.isP){document.getElementById('itemEmoji').textContent=pu.e;document.getElementById('itemLabel').textContent=pu.name;sfx.pickup();showNotif(pu.e+' '+pu.name+'!','#FFD700');}
-        pk.active=false;pk.mesh.visible=false;pk.respawnT=10;
+      if(!pk.active)return;
+      if(Math.abs(this.z-pk.z)<3.2&&Math.abs(this.x-pk.x)<3.2){
+        if(pk.isCoin){
+          // Coin pickup
+          const val=pk.value||5;
+          if(this.isP){
+            SD.coins+=val;coinsEarned+=val;raceStats.raceCoins+=val;
+            document.getElementById('hudCoins').textContent=SD.coins;
+            sfx.coin();
+            spawnDmgFloat(this.mesh.position,val,'coin');
+          }
+          pk.active=false;pk.mesh.visible=false;pk.respawnT=8;
+        } else if(!this.item){
+          const pu=POWERUPS[Math.floor(Math.random()*POWERUPS.length)];
+          this.item=pu;
+          if(this.isP){document.getElementById('itemEmoji').textContent=pu.e;document.getElementById('itemLabel').textContent=pu.name;sfx.pickup();showNotif(pu.e+' '+pu.name+'!','#FFD700');}
+          pk.active=false;pk.mesh.visible=false;pk.respawnT=10;
+        }
       }
     });
 
-    // Banana check
+    // Banana & oil slick checks
     for(let i=bananas.length-1;i>=0;i--){
       const bn=bananas[i];if(bn.owner===this)continue;
       if(Math.abs(this.z-bn.z)<2.8&&Math.abs(this.x-bn.x)<2.8){
         this.slowed=true;this.slowT=2.5;this.vz*=0.38;
         scene.remove(bn.mesh);bananas.splice(i,1);
+        if(!raceStats.noHit){}else raceStats.noHit=false;
         sfx.hit();if(this.isP){showNotif('🍌 SLIPPED!','#FFD700');flashDmg();}
+      }
+    }
+    for(let i=oilSlicks.length-1;i>=0;i--){
+      const os=oilSlicks[i];if(os.owner===this)continue;
+      if(Math.abs(this.z-os.z)<3.5&&Math.abs(this.x-os.x)<3.5){
+        this.driftAngle+=(Math.random()-.5)*0.8;
+        this.vx+=(Math.random()-.5)*12;
+        this.slowed=true;this.slowT=1.5;
+        sfx.hit();if(this.isP){showNotif('🛢️ OIL SLICK!','#888888');flashDmg();}
       }
     }
 
     // Magnet
-    if(this.isP&&this.magnetT>0){const e=Math.floor(dt*6);SD.coins+=e;coinsEarned+=e;document.getElementById('hudCoins').textContent=SD.coins;}
+    if(this.isP&&this.magnetT>0){const e=Math.floor(dt*6);SD.coins+=e;coinsEarned+=e;raceStats.raceCoins+=e;document.getElementById('hudCoins').textContent=SD.coins;}
+
+    // NEW: Drift distance tracking
+    if(this.isP&&this.drifting){
+      const dd=Math.abs(this.vz)*dt;
+      this.totalDriftDist+=dd;
+      raceStats.driftDist+=dd;
+    }
 
     // Lap / finish logic
     if(!this.finished&&this.z>=ROAD_LEN){
       if(this.lap<LAP_TOTAL){
+        // Record lap time
+        if(this.isP){
+          const lapT=raceTime-this.currentLapStart;
+          this.lapTimes.push(lapT);
+          if(lapT<bestLapTime){
+            bestLapTime=lapT;
+            const mm=Math.floor(lapT/60),ss=(lapT%60).toFixed(2);
+            document.getElementById('bestLapBadge').textContent='🏅 BEST LAP: '+mm+':'+ss.toString().padStart(5,'0');
+            document.getElementById('bestLapBadge').style.opacity='1';
+            setTimeout(()=>document.getElementById('bestLapBadge').style.opacity='0',3000);
+          }
+          this.currentLapStart=raceTime;
+        }
         this.lap++;this.z=8;
         if(this.isP){updateLapUI();sfx.lap();showNotif('🔄 LAP '+this.lap+(this.lap===LAP_TOTAL?' — FINAL!':''),'#FFD700');document.getElementById('lapFlash').style.opacity='.9';setTimeout(()=>document.getElementById('lapFlash').style.opacity='0',360);}
       } else {
@@ -815,69 +1039,72 @@ class Racer{
     this.syncMesh();
   }
 
-  // ── PLAYER PHYSICS — smooth, no rush ─────────────────────────
-  _updatePlayer(dt,inp,sM,onRoad,offFactor){
-    const steerDir=inp.l?-1:(inp.r?1:0);  // -1=left, +1=right
+  // ── PLAYER PHYSICS ────────────────────────────────────────────
+  _updatePlayer(dt,inp,sM,onRoad,offFactor,gripMod){
+    const steerDir=inp.l?-1:(inp.r?1:0);
     const speedRatio=Math.min(1,this.vz/Math.max(1,this.maxSpd));
 
-    // ── Forward speed (smooth acceleration) ──────────────────
+    // Forward speed
     let fwdTarget;
     if(inp.f){
-      fwdTarget=this.maxSpd*sM*offFactor*(this.isBoosting?1.72:1);
+      fwdTarget=this.maxSpd*sM*offFactor*weatherData.speedMod*(this.isBoosting?1.72:1);
     } else if(inp.b){
       fwdTarget=this.vz>0.5?0:-this.maxSpd*0.25*sM;
     } else {
       fwdTarget=0;
     }
-
-    // Smooth acceleration: lerp toward target
     const accLerp=inp.f?0.030:inp.b?(this.vz>0?0.045:0.025):0.020;
     this.vz+=(fwdTarget-this.vz)*Math.min(1,accLerp*dt*60);
-
-    // Natural deceleration when not accelerating
     if(!inp.f&&!inp.b)this.vz*=Math.pow(0.982,dt*60);
     if(Math.abs(this.vz)<0.04&&!inp.f&&!inp.b)this.vz=0;
 
-    // ── LATERAL / STEERING (left-right) ──────────────────────
-    // Key fix: direct lateral velocity control
-    // At speed, steering translates to lateral velocity
-    // At slow speed, more direct lateral movement
-    const steerStrength=this.hdl*(15+speedRatio*2)*offFactor*sM;
+    // Lateral / steering
+    const steerStrength=this.hdl*(15+speedRatio*2)*offFactor*sM*gripMod;
     const steerTargetVx=steerDir*steerStrength;
-
-    // Smooth lateral lerp — no sudden jump
     const steerLerp=steerDir!==0?0.12:0.08;
     this.vx+=(steerTargetVx-this.vx)*Math.min(1,steerLerp*dt*60);
-
-    // Lateral friction (stronger at low speed)
     const latFriction=onRoad?(steerDir!==0?0.88:0.84):0.92;
-    this.vx*=Math.pow(latFriction,dt*60);
-
-    // Clamp lateral speed
+    this.vx*=Math.pow(latFriction*gripMod,dt*60);
     const maxLat=this.hdl*16;
     this.vx=Math.max(-maxLat,Math.min(maxLat,this.vx));
 
-    // ── Drift detection ───────────────────────────────────────
+    // Drift
     const isDrifting=Math.abs(steerDir)>0.5&&this.vz>this.maxSpd*0.35&&onRoad;
     if(isDrifting){
       const driftTarget=steerDir*0.14*this.driftF;
       this.driftAngle+=(driftTarget-this.driftAngle)*Math.min(1,dt*5);
-      // Drift adds extra lateral push
       this.vx+=this.driftAngle*this.vz*dt*0.7;
-      if(Math.abs(this.driftAngle)>0.05)
+      if(Math.abs(this.driftAngle)>0.05){
         this.driftCharge=Math.min(MAX_DRIFT,this.driftCharge+dt*14*this.driftF);
+        // Drift combo
+        this.comboTimer=1.5;
+      }
       if(!this.drifting){this.drifting=true;sfx.drift();}
+      // Spawn smoke
+      if(Math.random()<0.15*dt*60){spawnSmoke(this.x,this.z);}
     } else {
       this.driftAngle*=Math.pow(0.05,dt);
       if(this.drifting&&this.driftCharge>=MAX_DRIFT*0.4){
-        this.boostE=Math.min(this.maxBoost,this.boostE+this.driftCharge*0.12);
-        showNotif('⚡ DRIFT BOOST!','#FF8800');this.driftCharge=0;
+        this.driftCombo++;
+        if(this.driftCombo>raceStats.maxCombo)raceStats.maxCombo=this.driftCombo;
+        const bonus=Math.round(this.driftCharge*0.12*(1+this.driftCombo*0.2));
+        this.boostE=Math.min(this.maxBoost,this.boostE+bonus);
+        showNotif('⚡ DRIFT x'+this.driftCombo+'! +'+bonus,'#FF8800');
+        updateComboHUD();
+        this.driftCharge=0;
       }
       if(this.drifting)this.drifting=false;
     }
+    // Combo timer decay
+    if(this.comboTimer>0){
+      this.comboTimer-=dt;
+    } else if(this.driftCombo>0){
+      this.driftCombo=0;updateComboHUD();
+    }
 
-    // ── BOOST ─────────────────────────────────────────────────
+    // BOOST
     if(inp.boost&&this.boostE>0&&onRoad){
+      if(!this.isBoosting){this.boostCount++;raceStats.boostCount++;}
       this.isBoosting=true;
       this.vz=Math.min(this.maxSpd*1.72*sM,this.vz+(this.maxSpd*1.72-this.vz)*Math.min(1,0.06*dt*60));
       this.boostE=Math.max(0,this.boostE-dt*20);
@@ -892,15 +1119,11 @@ class Racer{
       document.getElementById('speedLines').style.opacity=lineOp.toString();
     }
 
-    // ── Smooth visual lean ────────────────────────────────────
+    // Smooth visuals
     const leanTarget=steerDir*-speedRatio*0.25;
     this.leanAngle+=(leanTarget-this.leanAngle)*Math.min(1,dt*8);
-
-    // Smooth steer angle visual
     const steerVisTarget=steerDir*0.55+this.driftAngle*0.4;
     this.steerAngle+=(steerVisTarget-this.steerAngle)*Math.min(1,dt*10);
-
-    // Smooth yaw (drift visual yaw)
     const yawTarget=this.driftAngle*0.28;
     this.visualYaw+=(yawTarget-this.visualYaw)*Math.min(1,dt*7);
 
@@ -908,65 +1131,49 @@ class Racer{
     const dEl=document.getElementById('driftHUD');
     const dBar=document.getElementById('driftBar');
     if(this.drifting&&Math.abs(this.driftAngle)>0.03){
-      dEl.style.opacity='1';
-      dBar.style.width=(this.driftCharge/MAX_DRIFT*100)+'%';
+      dEl.style.opacity='1';dBar.style.width=(this.driftCharge/MAX_DRIFT*100)+'%';
     } else {
       dEl.style.opacity='0';
     }
   }
 
-  // ── AI PHYSICS — strong and aware ────────────────────────────
+  // ── AI PHYSICS ────────────────────────────────────────────────
   _updateAI(dt,sM,onRoad,offFactor){
     const diff=SD.settings.difficulty;
     const dM=diff==='easy'?0.62:diff==='hard'?1.28:1.0;
     const skill=this.personality.skill;
 
-    // Rubber banding — AI adjusts to player's position
     let rubberFactor=1.0;
     if(playerR){
       const gap=playerR.z-this.z+(playerR.lap-this.lap)*ROAD_LEN;
-      if(gap>120)      rubberFactor=0.82+0.12*(1-skill);  // player ahead: slow down
-      else if(gap<-120)rubberFactor=1.15+0.08*skill;      // player behind: speed up
+      if(gap>120)      rubberFactor=0.82+0.12*(1-skill);
+      else if(gap<-120)rubberFactor=1.15+0.08*skill;
       else             rubberFactor=0.96+0.06*skill;
     }
-
-    const tgtSpd=this.maxSpd*dM*rubberFactor*sM*offFactor;
-
-    // Smooth speed: AI accelerates/brakes fluidly
+    const tgtSpd=this.maxSpd*dM*rubberFactor*sM*offFactor*weatherData.speedMod;
     const aiAccLerp=0.022*(1+skill*0.8);
     this.vz+=(tgtSpd-this.vz)*Math.min(1,aiAccLerp*dt*60);
 
-    // Boost — smarter: use when behind player
     if(this.boostE<this.maxBoost)this.boostE+=dt*6;
     const playerAhead=playerR&&(playerR.z-this.z+(playerR.lap-this.lap)*ROAD_LEN)>0;
     const boostChance=playerAhead?0.007*skill*dM:0.003;
-    if(this.boostE>40&&Math.random()<boostChance){
-      this.vz=Math.min(this.maxSpd*1.6,this.vz+5);
-      this.boostE-=20;
-    }
+    if(this.boostE>40&&Math.random()<boostChance){this.vz=Math.min(this.maxSpd*1.6,this.vz+5);this.boostE-=20;}
 
-    // ── Smart lane changing with look-ahead ───────────────────
     this.aiLaneTimer-=dt;
-    if(this.aiLaneTimer<=0){
-      this.aiLaneTimer=1.2+Math.random()*2.0*(2-skill); // better AI changes more often
-      this._aiChooseLane();
-    }
+    if(this.aiLaneTimer<=0){this.aiLaneTimer=1.2+Math.random()*2.0*(2-skill);this._aiChooseLane();}
 
-    // Move toward target lane — smooth lateral
     const dxTarget=this.targetX-this.x;
     const latSpd=Math.min(Math.abs(dxTarget)*2.5,6+skill*4);
     const tgtVx=Math.sign(dxTarget)*Math.min(latSpd,Math.abs(dxTarget)*3);
     this.vx+=(tgtVx-this.vx)*Math.min(1,dt*6*(0.7+skill*0.5));
     this.vx*=Math.pow(0.80,dt*60);
 
-    // Visual lean
     const leanTarget=this.vx>0?0.18:this.vx<0?-0.18:0;
     this.leanAngle+=(leanTarget-this.leanAngle)*Math.min(1,dt*6);
     this.steerAngle+=(Math.sign(this.vx)*0.4-this.steerAngle)*Math.min(1,dt*8);
     const yawTarget=this.vx*0.008;
     this.visualYaw+=(yawTarget-this.visualYaw)*Math.min(1,dt*6);
 
-    // AI items — use them intelligently
     if(this.item&&this.aiItemCD<=0){
       const useChance=0.006*(0.5+this.personality.aggression)*dM;
       if(Math.random()<useChance){this.fireItem();this.aiItemCD=4+Math.random()*4;}
@@ -975,43 +1182,27 @@ class Racer{
 
   _aiChooseLane(){
     const skill=this.personality.skill;
-
-    // Look for cars ahead in same lane area
     const ahead=racers.find(r=>{
       if(r===this||r.finished)return false;
       const dz=r.z-this.z;
       return dz>0&&dz<35&&Math.abs(r.x-this.x)<LANE_W*1.4;
     });
-
     if(ahead){
-      // Blocked — find clear lane
-      const leftX=this.x-LANE_W;
-      const rightX=this.x+LANE_W;
+      const leftX=this.x-LANE_W,rightX=this.x+LANE_W;
       const leftClear=leftX>-ROAD_W&&!racers.some(r=>r!==this&&Math.abs(r.z-this.z)<20&&Math.abs(r.x-leftX)<LANE_W*0.8);
       const rightClear=rightX<ROAD_W&&!racers.some(r=>r!==this&&Math.abs(r.z-this.z)<20&&Math.abs(r.x-rightX)<LANE_W*0.8);
-
-      if(leftClear&&rightClear){
-        this.targetX=Math.random()<0.5?leftX:rightX;
-      } else if(leftClear){
-        this.targetX=leftX;
-      } else if(rightClear){
-        this.targetX=rightX;
-      }
-      // Clamp to road
+      if(leftClear&&rightClear)this.targetX=Math.random()<0.5?leftX:rightX;
+      else if(leftClear)this.targetX=leftX;
+      else if(rightClear)this.targetX=rightX;
       this.targetX=Math.max(-ROAD_W+LANE_W*0.5,Math.min(ROAD_W-LANE_W*0.5,this.targetX));
     } else {
-      // No obstacle — occasionally change lane for variety
       if(Math.random()<0.28+skill*0.2){
         const newLane=Math.floor(Math.random()*NUM_LANES);
         const newX=(newLane+0.5)*LANE_W-ROAD_W;
-        // Better AI aims more precisely for boost pads
         if(Math.random()<skill*0.4){
           const nearby=boostPads.find(bp=>bp.z>this.z&&bp.z-this.z<200);
-          if(nearby)this.targetX=nearby.x;
-          else this.targetX=newX;
-        } else {
-          this.targetX=newX;
-        }
+          if(nearby)this.targetX=nearby.x;else this.targetX=newX;
+        } else this.targetX=newX;
       }
     }
   }
@@ -1019,7 +1210,7 @@ class Racer{
   takeDmg(amt){
     if(this.shield||this.inv)return;
     this.armor=Math.max(0,this.armor-amt);
-    if(this.isP){sfx.hit();updateHpBar();shakeAmt=0.6;flashDmg();spawnDmgFloat(this.mesh.position,amt,'hit');}
+    if(this.isP){sfx.hit();updateHpBar();shakeAmt=0.6;flashDmg();spawnDmgFloat(this.mesh.position,amt,'hit');raceStats.noHit=false;}
     if(this.armor<=0){this.armor=this.maxArmor*0.35;this.vz*=0.2;this.slowed=true;this.slowT=2.0;sfx.explode();}
   }
 
@@ -1030,6 +1221,7 @@ class Racer{
     switch(it.id){
       case 'fireball':spawnProj(this,'fire');break;
       case 'homing':spawnProj(this,'homing');break;
+      case 'triple':spawnProj(this,'fire');setTimeout(()=>spawnProj(this,'fire'),150);setTimeout(()=>spawnProj(this,'fire'),300);break;
       case 'thunder':
         racers.forEach(r=>{if(r===this||r.inv)return;if(Math.abs(r.z-this.z)<30&&Math.abs(r.x-this.x)<FULL_W*0.8)r.takeDmg(24);});
         sfx.explode();if(this.isP){showNotif('⚡ THUNDER!','#FFFF00');shakeAmt=0.5;}
@@ -1040,8 +1232,26 @@ class Racer{
         bm.position.set(this.x,.4,this.z-5);scene.add(bm);
         bananas.push({mesh:bm,x:this.x,z:this.z-5,owner:this});
         if(this.isP)showNotif('🍌 BANANA DROP!','#FFD700');break;
+      case 'oil':
+        // NEW: Oil slick — bigger slip zone
+        const om=new THREE.Mesh(new THREE.CircleGeometry(3.5,12),new THREE.MeshPhongMaterial({color:0x222222,shininess:200,specular:new THREE.Color(0x555555),transparent:true,opacity:.7}));
+        om.rotation.x=-Math.PI/2;om.position.set(this.x,.03,this.z-6);scene.add(om);
+        oilSlicks.push({mesh:om,x:this.x,z:this.z-6,owner:this,life:20});
+        if(this.isP)showNotif('🛢️ OIL DOWN!','#888888');break;
+      case 'swap':
+        // NEW: Swap positions with nearest racer
+        let nearest=null,nearDist=9999;
+        racers.forEach(r=>{if(r===this)return;const d=Math.abs(r.z-this.z);if(d<nearDist){nearDist=d;nearest=r;}});
+        if(nearest){
+          const tx=nearest.x,tz=nearest.z;
+          nearest.x=this.x;nearest.z=this.z;
+          this.x=tx;this.z=tz;
+          sfx.explode();if(this.isP)showNotif('🌀 POSITION SWAP!','#AA00FF');}
+        break;
       case 'shield':this.shield=true;this.shieldT=10;this.shieldMesh.visible=true;if(this.isP)showNotif('🛡️ SHIELD!','#00FFC8');break;
-      case 'repair':this.armor=Math.min(this.maxArmor,this.armor+42);if(this.isP){updateHpBar();showNotif('💊 REPAIRED +42!','#00FFC8');spawnDmgFloat(this.mesh.position,42,'heal');}break;
+      case 'repair':
+        this.armor=Math.min(this.maxArmor,this.armor+42);
+        if(this.isP){updateHpBar();showNotif('💊 REPAIRED +42!','#00FFC8');spawnDmgFloat(this.mesh.position,42,'heal');flashHeal();}break;
       case 'nitro':this.vz=this.maxSpd*2.1;setTimeout(()=>{if(this.vz>this.maxSpd)this.vz=this.maxSpd;},3200);if(this.isP)showNotif('🚀 NITRO!','#00FFC8');sfx.boost();break;
       case 'freeze':racers.forEach(r=>{if(r===this)return;r.frozen=true;r.frozenT=2.5;});sfx.explode();if(this.isP)showNotif('❄️ FREEZE ALL!','#88CCFF');break;
       case 'magnet':this.magnetT=7;if(this.isP)showNotif('🧲 COIN MAGNET!','#FFD700');break;
@@ -1050,7 +1260,7 @@ class Racer{
   }
 }
 
-// ── Projectiles ──────────────────────────────────────────────
+// ── Projectiles ───────────────────────────────────────────────
 function spawnProj(owner,type){
   const col=type==='homing'?0x00FFC8:0xFF4400;
   const mesh=new THREE.Mesh(new THREE.SphereGeometry(.46,9,9),new THREE.MeshPhongMaterial({color:col,emissive:col,emissiveIntensity:.9}));
@@ -1087,12 +1297,33 @@ function updateProjectiles(dt){
   }
 }
 
+// NEW: Smoke particle spawn
+function spawnSmoke(x,z){
+  const pos=new THREE.Vector3(x,0.3,z).project(camera);
+  const sx=((pos.x+1)/2)*innerWidth,sy=((1-pos.y)/2)*innerHeight;
+  if(sx<-50||sx>innerWidth+50||sy<-50||sy>innerHeight+50)return;
+  const el=document.createElement('div');
+  el.className='smoke';el.style.left=(sx-8)+'px';el.style.top=(sy-8)+'px';
+  el.style.width='16px';el.style.height='16px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1000);
+}
+
 function updateFX(dt){
   pickups.forEach(pk=>{
-    if(pk.active){pk.mesh.rotation.y+=dt*2.2;pk.mesh.position.y=1.75+Math.abs(Math.sin(Date.now()*.0022))*.34;}
-    else{pk.respawnT-=dt;if(pk.respawnT<=0){pk.active=true;pk.mesh.visible=true;}}
+    if(pk.active){
+      if(pk.isCoin){pk.mesh.rotation.y+=dt*3.5;pk.mesh.position.y=1+Math.abs(Math.sin(Date.now()*.004))*.2;}
+      else{pk.mesh.rotation.y+=dt*2.2;pk.mesh.position.y=1.75+Math.abs(Math.sin(Date.now()*.0022))*.34;}
+    } else {pk.respawnT-=dt;if(pk.respawnT<=0){pk.active=true;pk.mesh.visible=true;}}
   });
   boostPads.forEach(bp=>{bp.mesh.material.emissiveIntensity=0.55+Math.sin(Date.now()*.006)*0.35;});
+
+  // Oil slick lifetime
+  for(let i=oilSlicks.length-1;i>=0;i--){
+    oilSlicks[i].life-=dt;
+    if(oilSlicks[i].life<=0){scene.remove(oilSlicks[i].mesh);oilSlicks.splice(i,1);}
+  }
+
   for(let i=fxList.length-1;i>=0;i--){
     const fx=fxList[i];
     if(fx.type==='explode'){
@@ -1101,38 +1332,45 @@ function updateFX(dt){
       if(fx.life<=0){scene.remove(fx.mesh);scene.remove(fx.light);fxList.splice(i,1);}
     } else if(fx.type==='cloud'){
       fx.mesh.position.x+=fx.mesh.userData.vx*dt;
-      if(fx.mesh.position.x< -120)fx.mesh.position.x= 120;
-      if(fx.mesh.position.x>  120)fx.mesh.position.x=-120;
+      if(fx.mesh.position.x<-120)fx.mesh.position.x=120;
+      if(fx.mesh.position.x>120)fx.mesh.position.x=-120;
     } else if(fx.type==='balloon'){
       fx.mesh.position.y=58+Math.sin(Date.now()*.0004)*4;
       fx.mesh.rotation.y+=dt*.035;
+    } else if(fx.type==='spectator'){
+      // Wave animation based on player proximity
+      if(playerR){
+        const dist=Math.abs(fx.mesh.position.z-playerR.z);
+        if(dist<40){
+          const wave=Math.sin(Date.now()*.006+fx.mesh.userData.waveOffset)*0.3;
+          fx.mesh.children[2]&&(fx.mesh.children[2].rotation.z=-Math.PI/4+wave);
+        }
+      }
     }
   }
   if(offroadTimer>0){offroadTimer-=dt;if(offroadTimer<=0)document.getElementById('offroadWarn').style.opacity='0';}
 }
 
-// ── CAMERA — smooth follow directly behind player ─────────────
-// Smooth camera state
-const camState={
-  x:0,y:9,z:-18,
-  lx:0,ly:1.5,lz:30,
-  fov:65
-};
+// ── CAMERA — multiple modes ────────────────────────────────────
+const camState={x:0,y:9,z:-18,lx:0,ly:1.5,lz:30,fov:65};
 
 function updateCamera(dt){
   if(!playerR)return;
   const px=playerR.x,pz=playerR.z;
   const speedR=Math.max(0,Math.min(1,playerR.vz/Math.max(1,playerR.maxSpd)));
+  const mode=SD.settings.camMode||'chase';
 
-  const behindDist=15+speedR*5;
-  const camHeight=8.2+speedR*1.5+(playerR.isBoosting?0.9:0);
+  let behindDist,camHeight,desiredFov;
+  switch(mode){
+    case 'low':    behindDist=10+speedR*3;camHeight=4.5+speedR*0.8;desiredFov=72+(playerR.isBoosting?16:0)+speedR*14;break;
+    case 'wide':   behindDist=22+speedR*8;camHeight=13+speedR*2;desiredFov=80+(playerR.isBoosting?8:0)+speedR*6;break;
+    default:       behindDist=15+speedR*5;camHeight=8.2+speedR*1.5+(playerR.isBoosting?0.9:0);desiredFov=65+(playerR.isBoosting?12:0)+speedR*9;
+  }
 
-  // Desired camera position — directly behind, no lateral offset
   const desiredX=px;
   const desiredY=camHeight;
   const desiredZ=pz-behindDist;
 
-  // Screen shake — only vertical + tiny horizontal, never Z
   let shakeX=0,shakeY=0;
   if(shakeAmt>0){
     shakeY=(Math.random()-0.5)*shakeAmt*1.4;
@@ -1140,34 +1378,32 @@ function updateCamera(dt){
     shakeAmt=Math.max(0,shakeAmt-dt*6);
   }
 
-  // Very smooth camera lerp — feels connected but not rigid
+  // Weather wind effect on camera
+  const windX=currentWeather==='windy'?Math.sin(Date.now()*.001)*0.8:0;
+  const windY=currentWeather==='thunderstorm'?Math.sin(Date.now()*.003+0.5)*0.4:0;
+
   const camLerpSpeed=(6+speedR*3)*dt;
-  camState.x+=(desiredX+shakeX-camState.x)*Math.min(1,camLerpSpeed);
-  camState.y+=(desiredY+shakeY-camState.y)*Math.min(1,camLerpSpeed*0.8);
+  camState.x+=(desiredX+shakeX+windX-camState.x)*Math.min(1,camLerpSpeed);
+  camState.y+=(desiredY+shakeY+windY-camState.y)*Math.min(1,camLerpSpeed*0.8);
   camState.z+=(desiredZ-camState.z)*Math.min(1,camLerpSpeed);
 
   camera.position.set(camState.x,camState.y,camState.z);
 
-  // Look-ahead target — forward, very slight lateral to track car
   const lookZ=pz+28+speedR*18;
   const lookX=px+playerR.vx*0.15;
   const desiredLookY=1.5+speedR*0.3;
-
   const lookLerp=9*dt;
   camState.lx+=(lookX-camState.lx)*Math.min(1,lookLerp);
   camState.ly+=(desiredLookY-camState.ly)*Math.min(1,lookLerp*0.6);
   camState.lz+=(lookZ-camState.lz)*Math.min(1,lookLerp);
 
   camera.lookAt(camState.lx,camState.ly,camState.lz);
-
-  // Smooth FOV
-  const tFov=65+(playerR.isBoosting?12:0)+speedR*9;
-  camState.fov+=(tFov-camState.fov)*Math.min(1,dt*4);
+  camState.fov+=(desiredFov-camState.fov)*Math.min(1,dt*4);
   camera.fov=camState.fov;
   camera.updateProjectionMatrix();
 }
 
-// ── Speedo ─────────────────────────────────────────────────────
+// ── Speedo ────────────────────────────────────────────────────
 const spdCtx=document.getElementById('speedoCanvas').getContext('2d');
 function drawSpeedo(spd,max){
   const ctx=spdCtx,w=188,h=115,cx=94,cy=97,r=76;
@@ -1225,10 +1461,7 @@ function updateHpBar(){
 }
 function updateLapUI(){if(!playerR)return;document.getElementById('lapNum').textContent=playerR.lap+' / '+LAP_TOTAL;}
 function updatePositions(){
-  const sorted=[...racers].sort((a,b)=>{
-    const aD=a.lap*ROAD_LEN+a.z,bD=b.lap*ROAD_LEN+b.z;
-    return bD-aD;
-  });
+  const sorted=[...racers].sort((a,b)=>{const aD=a.lap*ROAD_LEN+a.z,bD=b.lap*ROAD_LEN+b.z;return bD-aD;});
   sorted.forEach((r,i)=>r.rPos=i+1);
   if(playerR){
     const n=playerR.rPos;
@@ -1242,33 +1475,71 @@ function updateTimer(dt){raceTime+=dt;const m=Math.floor(raceTime/60),s=Math.flo
 function showNotif(txt,col='#FFD700'){const el=document.getElementById('notif');el.textContent=txt;el.style.color=col;el.style.opacity='1';notifTimer=2.2;}
 function tickNotif(dt){if(notifTimer>0){notifTimer-=dt;if(notifTimer<=0)document.getElementById('notif').style.opacity='0';}}
 function flashDmg(){const el=document.getElementById('damageFlash');el.style.opacity='.88';setTimeout(()=>el.style.opacity='0',110);}
+function flashHeal(){const el=document.getElementById('healFlash');el.style.opacity='.88';setTimeout(()=>el.style.opacity='0',300);}
 function spawnDmgFloat(pos,amt,type){
   const v=pos.clone().project(camera);
   const x=((v.x+1)/2)*innerWidth,y=((1-v.y)/2)*innerHeight;
   if(x<-50||x>innerWidth+50)return;
   const el=document.createElement('div');el.className='dmg '+type;
-  el.textContent=type==='hit'?'-'+Math.round(amt):'+'+Math.round(amt);
+  el.textContent=type==='hit'?'-'+Math.round(amt):(type==='coin'?'+'+Math.round(amt)+'🪙':'+'+Math.round(amt));
   el.style.left=x+'px';el.style.top=y+'px';document.body.appendChild(el);
   setTimeout(()=>el.remove(),1300);
 }
 
-// ── Countdown ──────────────────────────────────────────────────
+// NEW: Combo HUD
+function updateComboHUD(){
+  if(!playerR)return;
+  const el=document.getElementById('comboHUD');
+  const n=playerR.driftCombo;
+  if(n>0){
+    el.classList.add('show');
+    document.getElementById('comboNum').textContent=n+'x';
+    document.getElementById('comboBonus').textContent='+DRIFT BONUS';
+  } else {
+    el.classList.remove('show');
+  }
+}
+
+// ── Countdown ─────────────────────────────────────────────────
 function doCountdown(){
-  gState='countdown';let val=3;
+  gState='countdown';
+  // Show track name
+  const T=THEMES[themeIdx];
+  const tn=document.getElementById('trackName');
+  tn.textContent=T.name.toUpperCase()+' · '+weatherData.label;
+  tn.style.opacity='1';setTimeout(()=>tn.style.opacity='0',2500);
+
+  let val=3;
   const el=document.getElementById('cdNum');
   const tick=()=>{
     if(val>0){el.textContent=val;el.style.color=val===1?'#FF2244':'#FFD700';el.classList.add('pop');sfx.count(1);setTimeout(()=>el.classList.remove('pop'),750);val--;setTimeout(tick,1000);}
-    else{el.textContent='GO!';el.style.color='#00FFC8';el.classList.add('pop');sfx.count(0);setTimeout(()=>el.classList.remove('pop'),1000);gState='racing';}
+    else{el.textContent='GO!';el.style.color='#00FFC8';el.classList.add('pop');sfx.count(0);setTimeout(()=>el.classList.remove('pop'),1000);gState='racing';lapStartTime=0;}
   };tick();
 }
 
-// ── Race setup ─────────────────────────────────────────────────
+// ── Race setup ────────────────────────────────────────────────
+function pickWeather(T){
+  if(!SD.settings.weather){currentWeather='sunny';weatherData=WEATHERS.sunny;return;}
+  const options=T.weather||['sunny'];
+  currentWeather=options[Math.floor(Math.random()*options.length)];
+  weatherData=WEATHERS[currentWeather]||WEATHERS.sunny;
+  // Update weather HUD
+  document.getElementById('weatherEmoji').textContent=weatherData.label.split(' ')[0];
+  document.getElementById('weatherLabel').textContent=weatherData.label.split(' ').slice(1).join(' ');
+  // Rain overlay
+  const ro=document.getElementById('rainOverlay');
+  if(weatherData.rain>0){ro.style.opacity=weatherData.rain===2?'1':'0.7';initRain(weatherData.rain);}
+  else{ro.style.opacity='0';rainParticles=[];}
+}
+
 function startRace(ti){
   themeIdx=ti>=0?ti:0;
-  raceTime=0;coinsEarned=0;
-  generateRoad(THEMES[themeIdx]);
+  raceTime=0;coinsEarned=0;bestLapTime=Infinity;
+  raceStats={driftDist:0,maxCombo:0,finishPos:8,noHit:true,boostCount:0,raceCoins:0};
+  const T=THEMES[themeIdx];
+  pickWeather(T);
+  generateRoad(T);
   spawnRacers();
-  // Init camera state behind player
   if(playerR){
     camState.x=playerR.x;camState.y=9;camState.z=playerR.z-16;
     camState.lx=playerR.x;camState.ly=1.5;camState.lz=playerR.z+30;
@@ -1281,16 +1552,14 @@ function startRace(ti){
 function spawnRacers(){
   racers.forEach(r=>{if(r.mesh)scene.remove(r.mesh);if(r.shadowMesh)scene.remove(r.shadowMesh);});
   racers=[];playerR=null;
-  // Player starts in middle lane (lane 4)
   playerR=new Racer(SD.selectedCar,true,12,4,'YOU');
   racers.push(playerR);
   const names=['Speed Jr','Dax','Moto','Zara','Rex','Nia','Bolt'];
   const cup=CUPS[cupIdx];
   for(let i=0;i<7;i++){
-    const lane=i<4?i:(i>=5?i+1:i); // spread evenly, skip player lane (4)
+    const lane=i<4?i:(i>=5?i+1:i);
     const bossIdx=cup&&cup.boss!=null?cup.boss:null;
     const ci=i===6&&bossIdx!=null?bossIdx:Math.floor(Math.random()*6);
-    // Stagger: grid start positions
     const row=Math.floor(i/2);
     const startZ=Math.max(0,10-(row+1)*6);
     racers.push(new Racer(ci,false,startZ,lane%NUM_LANES,names[i]));
@@ -1302,9 +1571,14 @@ function startQuickRace(){cupIdx=-1;LAP_TOTAL=3;startRace(Math.floor(Math.random
 function onPlayerFinish(){
   if(gState==='finished')return;
   gState='finished';updatePositions();
+  raceStats.finishPos=playerR.rPos;
+  SD.totalRaces++;
+  // Challenge progress
+  checkChallenges();
+
   const pos=playerR.rPos;
   coinsEarned=Math.max(0,(8-pos)*75+140);
-  SD.coins+=coinsEarned;SD.totalRaces++;save();
+  SD.coins+=coinsEarned;save();
   if(pos===1){
     document.getElementById('winText').textContent='🏆 YOU WIN!';
     document.getElementById('winSub').textContent='1ST PLACE — RACE COMPLETE!';
@@ -1313,6 +1587,36 @@ function onPlayerFinish(){
   } else {
     setTimeout(showResults,2000);
   }
+}
+
+// NEW: Challenge system
+function checkChallenges(){
+  CHALLENGE_DEFS.forEach(ch=>{
+    if(SD.challenges[ch.id])return; // already done
+    let done=false;
+    switch(ch.goal){
+      case 'driftDist':   done=raceStats.driftDist>=ch.target;break;
+      case 'maxCombo':    done=raceStats.maxCombo>=ch.target;break;
+      case 'finishPos':   done=raceStats.finishPos<=ch.target;break;
+      case 'noHit':       done=raceStats.noHit;break;
+      case 'boostCount':  done=raceStats.boostCount>=ch.target;break;
+      case 'raceCoins':   done=raceStats.raceCoins>=ch.target;break;
+    }
+    if(done){SD.challenges[ch.id]=true;SD.coins+=ch.reward;showNotif('🎯 CHALLENGE: '+ch.name+'! +'+ch.reward+'🪙','#AA00FF');}
+  });
+  save();
+}
+
+function renderChallenges(){
+  document.getElementById('challengeGrid').innerHTML=CHALLENGE_DEFS.map(ch=>{
+    const done=!!SD.challenges[ch.id];
+    return `<div style="background:${done?'rgba(0,255,100,.08)':'rgba(255,255,255,.04)'};border:1.5px solid ${done?'rgba(0,255,100,.4)':'rgba(255,255,255,.1)'};border-radius:12px;padding:16px;text-align:center">
+      <div style="font-size:24px;margin-bottom:8px">${done?'✅':'🎯'}</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:1px;color:${done?'#00FF88':'#FFD700'};margin-bottom:5px">${ch.name}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.36);margin-bottom:10px">${ch.desc}</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:${done?'rgba(255,255,255,.3)':'#00FFC8'}">${done?'DONE':'🪙 '+ch.reward}</div>
+    </div>`;
+  }).join('');
 }
 
 // ── Results ────────────────────────────────────────────────────
@@ -1332,6 +1636,10 @@ function showResults(){
     pEl.innerHTML+=`<div class="pPlace"><div style="width:62px;height:36px;background:#${(r.def.col||0x888888).toString(16).padStart(6,'0')};border-radius:7px;margin:0 auto 5px"></div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">${r.name}${you}</div><div class="pBox" style="background:${pC[i]};height:${pH[i]}px">${pE[i]}</div></div>`;
   });
   document.getElementById('rewardBadge').textContent='+'+coinsEarned+' 🪙 COINS';
+  // NEW: Race stats
+  const blt=bestLapTime<Infinity?Math.floor(bestLapTime/60)+':'+(bestLapTime%60).toFixed(2).padStart(5,'0'):'--:--';
+  document.getElementById('statRow').innerHTML=`<span>🌀 MAX COMBO: ${raceStats.maxCombo}x</span><span>⚡ BOOSTS: ${raceStats.boostCount}</span><span>🏅 BEST LAP: ${blt}</span><span>🪙 COINS: +${raceStats.raceCoins}</span>`;
+
   let tbl='<thead><tr><th>#</th><th>RACER</th><th>ARMOR</th><th>LAP</th><th>TIME</th></tr></thead><tbody>';
   sorted.forEach((r,i)=>{
     const you=r.isP?' class="you"':'';
@@ -1342,27 +1650,23 @@ function showResults(){
   document.getElementById('nextBtn').style.display=(CUPS[cupIdx]&&raceInCup<CUPS[cupIdx].tracks.length-1)?'block':'none';
 }
 
-function nextRace(){
-  if(cupIdx<0)return;const cup=CUPS[cupIdx];raceInCup++;
-  if(raceInCup>=cup.tracks.length){showScreen('titleScreen');return;}
-  LAP_TOTAL=cup.laps;startRace(cup.tracks[raceInCup]);
-}
+function nextRace(){if(cupIdx<0)return;const cup=CUPS[cupIdx];raceInCup++;if(raceInCup>=cup.tracks.length){showScreen('titleScreen');return;}LAP_TOTAL=cup.laps;startRace(cup.tracks[raceInCup]);}
 
-// ── Shop / Garage / Champ ──────────────────────────────────────
+// ── Shop / Garage / Champ ─────────────────────────────────────
 const SHOP=[
-  {id:'e0',label:'ENGINE I',desc:'Speed +1',price:180,up:'engine',req:0},
-  {id:'e1',label:'ENGINE II',desc:'Speed +2',price:380,up:'engine',req:1},
-  {id:'e2',label:'ENGINE MAX',desc:'Top speed',price:720,up:'engine',req:2},
-  {id:'h0',label:'HANDLING I',desc:'Better steer',price:180,up:'handling',req:0},
+  {id:'e0',label:'ENGINE I',   desc:'Speed +1',     price:180,up:'engine',  req:0},
+  {id:'e1',label:'ENGINE II',  desc:'Speed +2',     price:380,up:'engine',  req:1},
+  {id:'e2',label:'ENGINE MAX', desc:'Top speed',    price:720,up:'engine',  req:2},
+  {id:'h0',label:'HANDLING I', desc:'Better steer', price:180,up:'handling',req:0},
   {id:'h1',label:'HANDLING II',desc:'Pro cornering',price:360,up:'handling',req:1},
-  {id:'a0',label:'ARMOR I',desc:'Health +10',price:200,up:'armor',req:0},
-  {id:'a1',label:'ARMOR II',desc:'Health +20',price:440,up:'armor',req:1},
-  {id:'b0',label:'BOOST I',desc:'Bigger tank',price:180,up:'boost',req:0},
-  {id:'b1',label:'BOOST II',desc:'Super boost',price:350,up:'boost',req:1},
+  {id:'a0',label:'ARMOR I',    desc:'Health +10',   price:200,up:'armor',   req:0},
+  {id:'a1',label:'ARMOR II',   desc:'Health +20',   price:440,up:'armor',   req:1},
+  {id:'b0',label:'BOOST I',    desc:'Bigger tank',  price:180,up:'boost',   req:0},
+  {id:'b1',label:'BOOST II',   desc:'Super boost',  price:350,up:'boost',   req:1},
   {id:'c2',label:'JUNGLE FURY',desc:'Fast & armored',price:250,car:2},
   {id:'c3',label:'ICE BREAKER',desc:'Speed monster',price:450,car:3},
-  {id:'c4',label:'LAVA LORD',desc:'Heavy tank',price:650,car:4},
-  {id:'c5',label:'STORM WING',desc:'Ultimate racer',price:900,car:5},
+  {id:'c4',label:'LAVA LORD',  desc:'Heavy tank',   price:650,car:4},
+  {id:'c5',label:'STORM WING', desc:'Ultimate racer',price:900,car:5},
 ];
 function renderShop(){
   document.getElementById('shopCoins').textContent=SD.coins;
@@ -1389,11 +1693,17 @@ function renderChamp(){
   }).join('');
 }
 function startCup(ci){cupIdx=ci;raceInCup=0;LAP_TOTAL=CUPS[ci].laps;startRace(CUPS[ci].tracks[0]);}
-function loadSettings(){document.getElementById('diffSel').value=SD.settings.difficulty;const b=document.getElementById('sfxT');b.textContent=SD.settings.sfx?'ON':'OFF';b.className=SD.settings.sfx?'tog on':'tog';}
+function loadSettings(){
+  document.getElementById('diffSel').value=SD.settings.difficulty;
+  const cs=document.getElementById('camSel');if(cs)cs.value=SD.settings.camMode||'chase';
+  const b=document.getElementById('sfxT');b.textContent=SD.settings.sfx?'ON':'OFF';b.className=SD.settings.sfx?'tog on':'tog';
+  const sh=document.getElementById('shadowT');if(sh){sh.textContent=SD.settings.shadows?'ON':'OFF';sh.className=SD.settings.shadows?'tog on':'tog';}
+  const wt=document.getElementById('weatherT');if(wt){wt.textContent=SD.settings.weather?'ON':'OFF';wt.className=SD.settings.weather?'tog on':'tog';}
+}
 
-// ── Screen manager ─────────────────────────────────────────────
-const SCREENS=['titleScreen','champScreen','garageScreen','shopScreen','settingsScreen','resultsScreen','pauseScreen'];
-const SCREEN_INIT={shopScreen:renderShop,garageScreen:renderGarage,champScreen:renderChamp,settingsScreen:loadSettings};
+// ── Screen manager ────────────────────────────────────────────
+const SCREENS=['titleScreen','champScreen','garageScreen','shopScreen','settingsScreen','resultsScreen','pauseScreen','challengeScreen'];
+const SCREEN_INIT={shopScreen:renderShop,garageScreen:renderGarage,champScreen:renderChamp,settingsScreen:loadSettings,challengeScreen:renderChallenges};
 function showScreen(id){
   SCREENS.forEach(s=>document.getElementById(s).classList.add('off'));
   document.getElementById('hud').classList.add('off');
@@ -1411,37 +1721,44 @@ function showScreen(id){
 function useItem(){if(playerR&&playerR.item)playerR.fireItem();}
 function resumeGame(){paused=false;gState='racing';showScreen('game');}
 
-// ── Input ──────────────────────────────────────────────────────
+// ── Input ─────────────────────────────────────────────────────
 const keys={};
 window.addEventListener('keydown',e=>{
   keys[e.code]=true;
   if(e.code==='Space'){e.preventDefault();if(gState==='racing')useItem();}
+  if(e.code==='KeyC'&&gState==='racing'){
+    // Cycle camera
+    const modes=['chase','low','wide'];
+    const cur=SD.settings.camMode||'chase';
+    const next=modes[(modes.indexOf(cur)+1)%modes.length];
+    SD.settings.camMode=next;save();showNotif('📷 '+next.toUpperCase()+' CAM','#00FFC8');
+  }
   if(e.code==='Escape'){
-    if(gState==='racing'){paused=true;gState='paused';showScreen('pauseScreen');}
+    if(gState==='racing'){paused=true;gState='paused';
+      document.getElementById('pauseStats').textContent='TIME: '+document.getElementById('raceTimer').textContent+'  |  POS: '+playerR.rPos+'/8';
+      showScreen('pauseScreen');}
     else if(gState==='paused')resumeGame();
     else if(gState==='finished')showScreen('titleScreen');
   }
 });
 window.addEventListener('keyup',e=>{keys[e.code]=false;});
-// Block all mouse interaction on the game canvas
 window.addEventListener('mousemove',e=>e.stopPropagation(),true);
 
 function getInput(){
   return{
     f:    keys['ArrowUp']   ||keys['KeyW']||td.f,
     b:    keys['ArrowDown'] ||keys['KeyS']||td.b,
-    l:    keys['ArrowLeft'] ||keys['KeyA']||td.l,   // LEFT = negative X
-    r:    keys['ArrowRight']||keys['KeyD']||td.r,   // RIGHT = positive X
+    l:    keys['ArrowLeft'] ||keys['KeyA']||td.l,
+    r:    keys['ArrowRight']||keys['KeyD']||td.r,
     boost:keys['ShiftLeft'] ||keys['ShiftRight']||keys['KeyX']||td.boost
   };
 }
 
-// ── Menu scene ─────────────────────────────────────────────────
+// ── Menu scene ────────────────────────────────────────────────
 const menuScene=new THREE.Scene();
 const menuCam=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,600);
 menuCam.position.set(0,7,0);menuCam.lookAt(0,1,30);
 let menuCars=[];
-
 (function setupMenu(){
   menuScene.background=new THREE.Color(0x000c1a);
   menuScene.fog=new THREE.Fog(0x000c1a,80,220);
@@ -1456,10 +1773,8 @@ let menuCars=[];
   oc.rotation.x=-Math.PI/2;oc.position.set(-60,-1.9,300);menuScene.add(oc);
   CARS.slice(0,6).forEach((cd,i)=>{
     const m=buildCarMesh(cd);m.scale.setScalar(1.1);
-    const startZ=80+i*35;
-    const lx=(i%4)*10-15;
-    m.position.set(lx,-1,startZ);
-    m.rotation.y=Math.PI;
+    const startZ=80+i*35,lx=(i%4)*10-15;
+    m.position.set(lx,-1,startZ);m.rotation.y=Math.PI;
     menuScene.add(m);menuCars.push({mesh:m,spd:0.25+cd.spd*.01,z:startZ,x:lx});
   });
   const sg=new THREE.BufferGeometry();const sv=[];
@@ -1472,7 +1787,7 @@ let menuCars=[];
   CARS.slice(0,4).forEach((cd,i)=>{const lp=new THREE.PointLight(cd.col,.38,55);lp.position.set(Math.cos(i/4*Math.PI*2)*40,15,80+Math.sin(i/4*Math.PI*2)*20);menuScene.add(lp);});
 })();
 
-// ── Main loop ──────────────────────────────────────────────────
+// ── Main loop ─────────────────────────────────────────────────
 let lastT=0;
 function loop(t){
   requestAnimationFrame(loop);
@@ -1480,29 +1795,23 @@ function loop(t){
 
   if(gState==='menu'){
     menuCars.forEach(c=>{
-      c.z-=c.spd*dt*35;
-      if(c.z<-5)c.z=120+Math.random()*80;
+      c.z-=c.spd*dt*35;if(c.z<-5)c.z=120+Math.random()*80;
       c.mesh.position.z=c.z;
       const ws=c.mesh.userData.wheels;
       if(ws)ws.forEach(w=>{w.children[0].rotation.x-=dt*5*c.spd;w.children[1].rotation.x-=dt*5*c.spd;});
     });
-    menuCam.position.set(0,7,0);
-    menuCam.lookAt(0,1,35);
-    renderer.render(menuScene,menuCam);
-    return;
+    menuCam.position.set(0,7,0);menuCam.lookAt(0,1,35);
+    renderer.render(menuScene,menuCam);return;
   }
 
   if(gState==='countdown'){
     if(playerR){
-      const px=playerR.x,pz=playerR.z;
-      // Smooth camera during countdown
-      camState.x+=(px-camState.x)*Math.min(1,dt*5);
-      camState.z+=(pz-16-camState.z)*Math.min(1,dt*5);
+      camState.x+=(playerR.x-camState.x)*Math.min(1,dt*5);
+      camState.z+=(playerR.z-16-camState.z)*Math.min(1,dt*5);
       camera.position.set(camState.x,9,camState.z);
-      camera.lookAt(px,1.5,pz+28);
+      camera.lookAt(playerR.x,1.5,playerR.z+28);
     }
-    renderer.render(scene,camera);
-    return;
+    renderer.render(scene,camera);return;
   }
 
   if(gState==='racing'){
@@ -1516,10 +1825,14 @@ function loop(t){
     updateFX(dt);
     tickNotif(dt);
     drawMinimap();
-    // Check if all AI finished and player is last
-    if(!playerR.finished&&racers.filter(r=>!r.isP).every(r=>r.finished)){
-      playerR.finished=true;onPlayerFinish();
+    // Rain
+    if(weatherData.rain>0)drawRain(dt);
+    // Lightning flash
+    if(currentWeather==='thunderstorm'&&Math.random()<0.003){
+      const lf=document.getElementById('lapFlash');lf.style.background='rgba(200,220,255,.25)';lf.style.opacity='.9';setTimeout(()=>{lf.style.opacity='0';lf.style.background='rgba(255,215,0,.13)';},80);
+      sfx.explode();
     }
+    if(!playerR.finished&&racers.filter(r=>!r.isP).every(r=>r.finished)){playerR.finished=true;onPlayerFinish();}
   }
 
   if(gState!=='menu')renderer.render(scene,camera);
@@ -1527,8 +1840,9 @@ function loop(t){
 loop(0);
 
 showScreen('titleScreen');gState='menu';
-console.log('%c🏖️ BRU KART RACING v2 — Smooth Edition  |  by INEZA AIME BRUNO','color:#FFD700;font-size:16px;font-weight:900');
-console.log('%c↑/W=Gas  ↓/S=Brake  ←/A=Steer Left  →/D=Steer Right  Shift=Boost  Space=Item  Esc=Pause','color:#00FFC8');
+console.log('%c🏖️ BRU KART RACING v3.0 — Beach Buggy Enhanced  |  INEZA AIME BRUNO','color:#FFD700;font-size:16px;font-weight:900');
+console.log('%cNEW: Weather System · Drift Combos · Challenges · 3 Camera Modes · Wrong Way · Oil Slick · Triple Fire · Position Swap','color:#00FFC8');
+console.log('%c↑/W=Gas  ↓/S=Brake  ←→=Steer  Shift=Boost  Space=Item  C=Camera  Esc=Pause','color:#aaaaff');
 </script>
 </body>
 </html>
